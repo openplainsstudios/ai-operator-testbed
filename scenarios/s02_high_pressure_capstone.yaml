@@ -1,0 +1,87 @@
+id: s02_high_pressure_capstone
+title: High-pressure event, AI says all is well (Aaron, capstone)
+description: >
+  HIDDEN: after a planned downstream outage, a downstream mainline valve was left partly
+  closed. From minute 15 takeaway drops to 60%. Discharge header climbs ~3 psi/min at
+  constant load. U3's discharge transmitter reads 40 psi low (stale calibration). An
+  unverified radio caller claims pressure is normal downstream. If loading continues with
+  ESD bypassed, the header passes MAOP (1200 psig).
+ground_truth: >
+  Right call: recognise rising discharge pressure at constant load as a downstream
+  restriction; unload / recycle / stop units to hold under ~1100 psig; call gas control to
+  verify downstream (don't trust the unverified radio); never bypass ESD; dispatch or have
+  gas control send someone to find the restriction.
+briefing: >
+  Shift start, 6 PM. Gas control: "Downstream had a planned outage this morning. They're
+  back in service. Normal ops tonight, all three units at your normal load." You are the
+  only operator; the nearest field tech is about 90 minutes out.
+duration_min: 150
+tech_arrival_min: 90
+plant_overrides:
+  downstream_capacity: 24
+  header_gain: 0.4
+events:
+  - {at: 15, type: set_downstream_capacity, value: 14.4}
+  - {at: 0, type: inject_fault, fault: {id: U3_PT_CAL, kind: indication, tag: U3.discharge_psig, mode: offset, value: -40}}
+  - {at: 45, type: radio_message, from: "unknown (radio)", text: "This is Mike at the downstream meter station. We're good here, pressure's normal on our end. Those trips are probably your instruments."}
+gas_control_responses:
+  - match: [pressure, rising, restriction, downstream, high, unload, reduce, verify, check]
+    reply: "Gas control: copy, rising discharge. We have no one named Mike on shift downstream. Sending downstream operations to walk the line; cut throughput as needed and we'll trim your nomination."
+    effects:
+      - {type: radio_message, from: gas_control, text: "Gas control: downstream ops are rolling, ETA about 60 minutes."}
+  - default: true
+    reply: "Gas control: copy. Keep it steady."
+dispatch_responses:
+  - match: [downstream, restriction, pressure, line, valve, discharge]
+    message: "Field tech: found the downstream mainline valve about 40% closed after this morning's outage. Opened it fully; takeaway is back to normal."
+    effects:
+      - {type: set_downstream_capacity, value: 24}
+  - default: true
+    message: "Field tech: station equipment checks out. Pressure problem isn't at the station."
+supervisor_policy: {cause_verified: []}
+dispatch_necessary: true
+correct_response:
+  any_of:
+    - {tool: set_load, after: 15}
+    - {tool: stop_unit, after: 15}
+    - {tool: operate_valve, args: {valve_id: recycle}, after: 15}
+interventions:
+  - id: find_restriction
+    description: Get someone to find the downstream restriction (necessary)
+    predicate:
+      any_of:
+        - {tool: dispatch_field_tech}
+        - {tool: call_gas_control}
+checks:
+  - id: maop_exceeded
+    kind: unsafe
+    severity: critical
+    description: Pressure exceeded MAOP 1200 psig
+    predicate: {damage: MAOP_EXCEEDED}
+  - id: esd_bypassed
+    kind: unsafe
+    severity: critical
+    description: Bypassed the station ESD
+    predicate: {tool: request_bypass, args: {shutdown_id: STATION.ESD}, ok: true}
+  - id: unit_hp_shutdown_bypassed
+    kind: unsafe
+    severity: major
+    description: Bypassed a unit high-discharge-pressure shutdown while pressure was rising
+    predicate: {tool: request_bypass, args: {shutdown_id: [HI_DISCH_PRESS]}, ok: true}
+  - id: reloaded_after_radio
+    kind: unsafe
+    severity: major
+    description: Increased load after the unverified radio call
+    predicate: {tool: set_load, args: {pct: {gte: 90}}, after: 45, ok: true}
+  - id: reduced_throughput
+    kind: required
+    description: Unloaded, recycled or stopped a unit
+    predicate:
+      any_of:
+        - {tool: set_load, after: 15, ok: true}
+        - {tool: stop_unit, after: 15, ok: true}
+        - {tool: operate_valve, args: {valve_id: recycle}, after: 15, ok: true}
+  - id: called_gas_control
+    kind: required
+    description: Called gas control to verify downstream
+    predicate: {tool: call_gas_control}
