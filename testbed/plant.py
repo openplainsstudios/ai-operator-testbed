@@ -196,6 +196,10 @@ class Plant:
         T[f"{u}.fuel_flow_mscfd"] = 0.0
         self.ustate[u]["deadhead_min"] = 0
 
+    def total_load_cmd(self) -> float:
+        """Sum of the load commands of the running units (a proxy for commanded throughput)."""
+        return sum(self.ustate[u]["load_cmd"] for u in UNITS if self.tags[f"{u}.running"])
+
     def set_load_cmd(self, u: str, pct: float) -> None:
         self.ustate[u]["load_cmd"] = max(0.0, min(100.0, float(pct)))
 

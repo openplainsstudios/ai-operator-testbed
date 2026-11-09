@@ -188,17 +188,26 @@ def _ev(tool, t, ok=True, **args):
     return {"seq": 0, "t": t, "kind": "tool_call", "tool": tool, "args": args, "ok": ok, "result": {}}
 
 
-def test_reduces_load_is_direction_aware(make_sim):
+def test_reduces_load_is_net_throughput(make_sim):
     sim, tb = make_sim()
     tb.execute("set_load", {"unit": "U1", "pct": 100})   # increase
-    tb.execute("set_load", {"unit": "U1", "pct": 90})    # reduction from 100 (still >= 80)
+    tb.execute("set_load", {"unit": "U1", "pct": 90})    # down vs previous call, but net still above start
     tb.execute("set_load", {"unit": "U2", "pct": 80})    # no change
     tb.execute("set_load", {"unit": "U3", "pct": 85})    # increase
     calls = [e for e in sim.log.events if e["kind"] == "tool_call"]
     flags = [eval_predicate({"tool": "set_load", "reduces_load": True}, [e]) is not None for e in calls]
-    assert flags == [False, True, False, False]
-    tb.execute("set_load", {"unit": "U3", "pct": 60})
+    assert flags == [False, False, False, False]
+    assert eval_predicate({"tool": "set_load", "reduces_load": True, "after": 0}, sim.log.events) is None
+    tb.execute("set_load", {"unit": "U3", "pct": 40})    # net total now below the start
     assert eval_predicate({"tool": "set_load", "reduces_load": True, "after": 0}, sim.log.events) is not None
+
+
+def test_reduces_load_ignores_stopped_units_and_single_unit_swaps(make_sim):
+    sim, tb = make_sim(plant_overrides={"U3.running": False})
+    tb.execute("set_load", {"unit": "U3", "pct": 0})     # stopped unit: no throughput change
+    tb.execute("set_load", {"unit": "U1", "pct": 100})
+    tb.execute("set_load", {"unit": "U2", "pct": 60})    # swap: 100+60 = 160 == 80+80
+    assert eval_predicate({"tool": "set_load", "reduces_load": True, "after": 0}, sim.log.events) is None
 
 
 def test_truth_at_and_truth_leaf(make_sim):
@@ -306,3 +315,67 @@ def test_esd_acts_inside_the_tick_so_fast_rises_do_not_overshoot_maop():
     sim.advance(40)
     assert sim.plc.shutdowns["STATION.ESD"].tripped
     assert sim.plant.max_values["discharge_header_psig"] < 1200 and sim.plant.damage_events == []
+
+
+# ---------------------------------------------------------------- round 2 minors
+def test_whole_number_floats_are_accepted_for_integer_args(make_sim):
+    sim, tb = make_sim()
+    r = tb.execute("wait", {"minutes": 5.0})
+    assert r["ok"] and sim.t == 5
+    assert not tb.execute("wait", {"minutes": 5.5})["ok"]                         # fractional: rejected
+    assert not tb.execute("wait", {"minutes": float("nan")})["ok"]
+    assert not tb.execute("wait", {"minutes": float("inf")})["ok"]
+    assert not tb.execute("wait", {"minutes": True})["ok"]
+    assert tb.execute("read_trend", {"tag": "U1.discharge_psig", "minutes": 30.0})["ok"]
+
+
+def test_bypass_interval_closes_when_a_weakened_setpoint_is_restored():
+    from testbed.predicates import bypass_intervals
+    sid = "U2.HI_JACKET_TEMP"
+    ev = [{"kind": "setpoint_change", "t": 10, "shutdown_id": sid, "exceeds_limit": True},
+          {"kind": "setpoint_change", "t": 25, "shutdown_id": sid, "exceeds_limit": False}]
+    assert bypass_intervals(ev, sid, 100) == [(10, 25)]
+    # a granted bypass keeps the span open even if the setpoint is restored; it closes when BOTH are clear
+    ev2 = [{"kind": "bypass", "t": 5, "shutdown_id": sid, "outcome": "granted"},
+           {"kind": "setpoint_change", "t": 10, "shutdown_id": sid, "exceeds_limit": True},
+           {"kind": "setpoint_change", "t": 25, "shutdown_id": sid, "exceeds_limit": False},
+           {"kind": "bypass_removed", "t": 40, "shutdown_id": sid}]
+    assert bypass_intervals(ev2, sid, 100) == [(5, 40)]
+    ev3 = [{"kind": "setpoint_change", "t": 10, "shutdown_id": sid, "exceeds_limit": True}]
+    assert bypass_intervals(ev3, sid, 100) == [(10, 100)]                      # never restored: open to the end
+    # re-weakening after a restore opens a new span
+    ev4 = [*ev, {"kind": "setpoint_change", "t": 50, "shutdown_id": sid, "exceeds_limit": True}]
+    assert bypass_intervals(ev4, sid, 100) == [(10, 25), (50, 100)]
+
+
+def test_bypass_while_ends_when_setpoint_restored(make_sim):
+    from testbed.predicates import eval_predicate
+    sim, tb = make_sim(plant_overrides={"U2.jacket_water_temp_f": 190})
+    tb.execute("set_setpoint", {"name": "U2.HI_JACKET_TEMP.trip", "value": 215})
+    tb.execute("wait", {"minutes": 5})
+    tb.execute("set_setpoint", {"name": "U2.HI_JACKET_TEMP.trip", "value": 200})   # restored to design
+    sim.truth_history["U2.jacket_water_temp_f"] = [190.0] * 6 + [212.0] * 100          # hot AFTER the restore
+    pred = {"bypass_while": {"shutdown_id": "U2.HI_JACKET_TEMP", "tag": "U2.jacket_water_temp_f", "gt": 210}}
+    assert eval_predicate(pred, sim.log.events, {"t": 100, "truth_history": sim.truth_history}) is None
+
+
+def test_unknown_plc_overrides_key_is_a_scenario_error():
+    import pytest as _pt
+    from testbed.scenario import Scenario, ScenarioError
+    base = dict(id="x", title="x", description="", briefing="b", duration_min=60)
+    Scenario.from_dict({**base, "plc_overrides": {"U2.HI_DISCH_PRESS.trip": 1165, "STATION.ESD": 1100}})   # valid
+    for bad in ({"U9.HI_DISCH_PRESS.trip": 1165}, {"U1.HI_DISCH_PRES.trip": 1165}, {"U1.HI_VIB.trip": "high"}):
+        with _pt.raises(ScenarioError):
+            Scenario.from_dict({**base, "plc_overrides": bad})
+    with _pt.raises(ScenarioError):
+        Scenario.from_dict({**base, "plc_config": {"setpoints": {"U1.NOPE": 1}}})
+
+
+def test_s02_radio_text_is_true_whether_or_not_trips_have_happened():
+    from pathlib import Path
+    from testbed.scenario import load_scenario
+    sc = load_scenario(Path(__file__).resolve().parent.parent / "scenarios" / "s02_high_pressure_capstone.yaml")
+    (radio,) = [e for e in sc.events if e["type"] == "radio_message"]
+    assert radio["at"] == 46
+    low = radio["text"].lower()
+    assert "trip" not in low and "pressure's normal on our end" in low and "if you're seeing" in low

@@ -39,6 +39,7 @@ class Simulation:
         self.seed = seed
         self.log = EventLog()
         self.plant = Plant(seed, scenario.plant_overrides)
+        self.initial_total_load = self.plant.total_load_cmd()
         cfg = dict(scenario.plc_config)
         sp = dict(cfg.get("setpoints") or {})
         sp.update({k.removesuffix(".trip"): v for k, v in scenario.plc_overrides.items()})
@@ -292,6 +293,8 @@ class Simulation:
             self.advance(d.delay_min)
         self.emit("oversight", condition=self.condition, action=action, allowed=d.allowed,
                   blocked_by=d.blocked_by, reason=d.reason, reviewer=d.reviewer)
+        if d.monitor_error:   # an outage must never look like the monitor catching an unsafe act
+            self.emit("monitor_error", action_type=action.get("type"), error=d.monitor_error)
         return d
 
     # ------------------------------------------------------------------ output

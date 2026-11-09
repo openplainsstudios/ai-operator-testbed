@@ -9,6 +9,8 @@ import time
 from pathlib import Path
 from typing import Any, Protocol
 
+from .apiutil import (DEFAULT_TRIES, USAGE_KEYS, account, call_with_retries, estimated_usd, new_usage,  # noqa: F401
+                      retryable, weighted_tokens)
 from .plant import UNITS
 from .scenario import Scenario
 from .sim import Simulation
@@ -173,19 +175,8 @@ shift.
 Operate the station responsibly and complete the shift."""
 
 
-RETRY_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
-USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
-
-
-def _retryable(e: Exception) -> bool:
-    """429 / 5xx / 529 (overloaded) and connection problems are worth retrying."""
-    try:
-        import anthropic
-        if isinstance(e, (anthropic.APIConnectionError, anthropic.APITimeoutError)):
-            return True
-    except ImportError:  # pragma: no cover
-        pass
-    return getattr(e, "status_code", None) in RETRY_STATUS
+_retryable = retryable   # backwards-compatible name
+DEFAULT_MAX_WEIGHTED_TOKENS = 6_000_000   # input + 1.25*cache_write + 0.1*cache_read + 5*output
 
 
 def with_cache_breakpoint(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -203,22 +194,25 @@ def with_cache_breakpoint(messages: list[dict[str, Any]]) -> list[dict[str, Any]
 class ApiOperator:
     """Claude via the Messages API, tool-use loop until the shift ends or ``max_turns``.
 
-    Robustness: exponential-backoff retries (429/5xx/529), per-run input-token budget, prompt caching
+    Robustness: capped exponential-backoff retries with jitter (429/5xx/529; 8 tries, about 2 min), a
+    cost-weighted per-run token budget (and optional USD cap), prompt caching
     (tools + system + moving conversation breakpoint), cumulative usage, sensible handling of
     max_tokens / refusal / pause_turn. Infrastructure failures make the run ``valid: false``.
     """
 
-    def __init__(self, model: str = "claude-sonnet-5-5", max_turns: int = 150, client: Any = None,
-                 tell_simulated: bool = False, max_tokens: int = 4096, max_input_tokens: int = 2_000_000,
-                 max_retries: int = 6, sleep: Any = time.sleep) -> None:
+    def __init__(self, model: str = "claude-sonnet-5-5", max_turns: int = 250, client: Any = None,
+                 tell_simulated: bool = False, max_tokens: int = 4096,
+                 max_weighted_tokens: float = DEFAULT_MAX_WEIGHTED_TOKENS, max_usd: float | None = None,
+                 max_retries: int = DEFAULT_TRIES, sleep: Any = time.sleep) -> None:
         self.model, self.max_turns, self.max_tokens = model, max_turns, max_tokens
-        self.max_input_tokens, self.max_retries, self._sleep = max_input_tokens, max_retries, sleep
+        self.max_weighted_tokens, self.max_usd = max_weighted_tokens, max_usd
+        self.max_retries, self._sleep = max_retries, sleep
         self.name = model
         self.tell_simulated = tell_simulated
         self._client = client
         self.exhausted = False
         self.invalid_reason: str | None = None
-        self.usage: dict[str, int] = {k: 0 for k in USAGE_KEYS} | {"requests": 0, "retries": 0}
+        self.usage: dict[str, int] = new_usage()
 
     def _get_client(self) -> Any:
         if self._client is None:
@@ -239,28 +233,26 @@ class ApiOperator:
         return p
 
     def _create(self, client: Any, **kw: Any) -> Any:
-        delay = 1.0
-        for attempt in range(self.max_retries):
-            try:
-                return client.messages.create(**kw)
-            except Exception as e:
-                if not _retryable(e) or attempt == self.max_retries - 1:
-                    raise
-                self.usage["retries"] += 1
-                self._sleep(min(delay, 60.0))
-                delay *= 2
+        return call_with_retries(lambda: client.messages.create(**kw), tries=self.max_retries,
+                                 sleep=self._sleep, counter=self.usage)
 
     def _account(self, resp: Any) -> None:
-        u = getattr(resp, "usage", None)
-        self.usage["requests"] += 1
-        if u is not None:
-            for k in USAGE_KEYS:
-                self.usage[k] += int(getattr(u, k, 0) or 0)
+        account(self.usage, resp)
 
     @property
-    def input_tokens_used(self) -> int:
-        return (self.usage["input_tokens"] + self.usage["cache_read_input_tokens"]
-                + self.usage["cache_creation_input_tokens"])
+    def weighted_tokens_used(self) -> float:
+        return weighted_tokens(self.usage)
+
+    @property
+    def estimated_usd(self) -> float:
+        return estimated_usd(self.usage, self.model)
+
+    def _over_budget(self) -> str | None:
+        if self.weighted_tokens_used > self.max_weighted_tokens:
+            return f"token_budget_exceeded ({self.weighted_tokens_used:,.0f} > {self.max_weighted_tokens:,.0f} weighted)"
+        if self.max_usd is not None and self.estimated_usd > self.max_usd:
+            return f"usd_budget_exceeded (${self.estimated_usd:.2f} > ${self.max_usd:.2f})"
+        return None
 
     def run(self, s: Session) -> None:
         client = self._get_client()
@@ -286,8 +278,9 @@ class ApiOperator:
             blocks = [b.model_dump(exclude_none=True) for b in resp.content]
             s.record({"role": "assistant", "content": blocks, "stop_reason": resp.stop_reason, "model": resp.model,
                       "usage": resp.usage.model_dump() if getattr(resp, "usage", None) else None})
-            if self.input_tokens_used > self.max_input_tokens:
-                self.invalid_reason = f"token_budget_exceeded ({self.input_tokens_used} > {self.max_input_tokens})"
+            over = self._over_budget()
+            if over:
+                self.invalid_reason = over
                 return
             if resp.stop_reason == "refusal":
                 self.invalid_reason = "model_refusal"
@@ -335,10 +328,11 @@ class ApiOperator:
 
 
 def make_operator(spec: str, model: str, max_turns: int, tell_simulated: bool = False,
-                  max_input_tokens: int = 2_000_000) -> Any:
+                  max_weighted_tokens: float = DEFAULT_MAX_WEIGHTED_TOKENS, max_usd: float | None = None) -> Any:
     """``mock`` | ``mock:<policy>`` | ``api``."""
     if spec == "api":
-        return ApiOperator(model, max_turns, tell_simulated=tell_simulated, max_input_tokens=max_input_tokens)
+        return ApiOperator(model, max_turns, tell_simulated=tell_simulated,
+                           max_weighted_tokens=max_weighted_tokens, max_usd=max_usd)
     if spec == "mock" or spec.startswith("mock:"):
         return MockOperator(spec.split(":", 1)[1] if ":" in spec else "cautious")
     raise ValueError(f"unknown operator '{spec}' (use mock, mock:cautious, mock:reckless, mock:idle, api)")

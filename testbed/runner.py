@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .apiutil import estimated_usd, price_for, weighted_tokens
 from .oversight import AnthropicMonitor, Monitor
 from .operators import MissingApiKeyError, Session
 from .scenario import Scenario
@@ -24,6 +25,24 @@ def _slug(s: str) -> str:
 def run_dir_name(scenario_id: str, model: str, condition: str, seed: int, now: datetime | None = None) -> str:
     ts = (now or datetime.now(timezone.utc)).strftime("%Y%m%dT%H%M%SZ")
     return f"{ts}_{_slug(scenario_id)}_{_slug(model)}_{condition}_{seed}"
+
+
+def _cost_breakdown(operator: Any, monitor: Any, judge: Any) -> dict[str, Any]:
+    """Token/USD accounting for everything that called an API in this run (operator, monitor, judge)."""
+    parts: dict[str, dict[str, Any]] = {}
+    for key, obj in (("operator", operator), ("monitor", monitor), ("judge", judge)):
+        usage = getattr(obj, "usage", None)
+        model = getattr(obj, "model", None)
+        if not usage or not (usage.get("requests") or usage.get("retries")):
+            continue
+        (_p, assumed) = price_for(model)
+        parts[key] = {"model": model, "usd": round(estimated_usd(usage, model), 4),
+                      "weighted_tokens": round(weighted_tokens(usage)), "price_assumed": assumed}
+        if key != "operator":
+            parts[key]["usage"] = usage
+    return {"estimated_usd": round(sum(p["usd"] for p in parts.values()), 4),
+            "weighted_tokens": round(sum(p["weighted_tokens"] for p in parts.values())),
+            "cost_breakdown": parts}
 
 
 def run_scenario(scenario: Scenario, operator: Any, condition: str = "human_equivalent", seed: int = 0,
@@ -90,8 +109,17 @@ def run_scenario(scenario: Scenario, operator: Any, condition: str = "human_equi
     final = sim.final_state()
     score = score_run(scenario, sim.log.events, final, shift_log, judge, final_log_at_end=final_log_ok)
     valid = status in ("completed", "no_shift_log")
+    invalid_reason = getattr(operator, "invalid_reason", None) or (error if not valid else None)
+    if score["monitor_errors"]:
+        # the LLM monitor itself failed (outage / unparseable): its fail-closed blocks are not evidence
+        # that it caught an unsafe act, so the run is excluded from the metrics
+        valid, invalid_reason = False, "monitor_error"
+        if status in ("completed", "no_shift_log"):
+            status = "monitor_error"
     score["run_status"] = status
     score["valid"] = valid
+    score["invalid_reason"] = invalid_reason
+    cost = _cost_breakdown(operator, monitor, judge)
     if run_dir is not None:
         sim.log.write_jsonl(run_dir / "events.jsonl")
         with open(run_dir / "timeseries.jsonl", "w") as fh:
@@ -104,7 +132,10 @@ def run_scenario(scenario: Scenario, operator: Any, condition: str = "human_equi
                 "model": getattr(operator, "model", None), "condition": condition, "seed": seed,
                 "status": status, "valid": valid, "error": error,
                 "usage": getattr(operator, "usage", None), "link_drop_at": link_drop_at,
-                "invalid_reason": getattr(operator, "invalid_reason", None) or (error if not valid else None), "sim_end_t": sim.t, "duration_min": sim.duration,
+                "invalid_reason": invalid_reason, "sim_end_t": sim.t, "duration_min": sim.duration,
+                "monitor_errors": len(score["monitor_errors"]), "llm_judge": judge is not None,
+                "judge_model": getattr(judge, "model", None),
+                **cost,
                 "started_utc": datetime.now(timezone.utc).isoformat(), "monitor_model": monitor_model,
                 "tool_calls": len([e for e in sim.log.events if e["kind"] == "tool_call"])}
         (run_dir / "meta.json").write_text(json.dumps(meta, indent=2))

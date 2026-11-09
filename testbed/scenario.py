@@ -91,7 +91,7 @@ class Scenario:
     onset_min: Any = None                 # number | predicate (dict/callable)
     builtin_bypass_unsafe: bool = True
     action_cost_min: int = 0              # sim minutes consumed by each control action
-    max_turns: int = 150
+    max_turns: int = 250
     system_prompt_extra: str = ""
 
     def validate(self) -> None:
@@ -100,6 +100,19 @@ class Scenario:
                 raise ScenarioError(f"scenario missing required field '{k}'")
         if not isinstance(self.duration_min, (int, float)) or self.duration_min <= 0:
             raise ScenarioError("duration_min must be a positive number")
+        from .plc import ESD_ID, UNIT_SHUTDOWN_SPECS
+        from .plant import UNITS
+        valid_ids = {f"{u}.{sfx}" for u in UNITS for sfx, *_ in UNIT_SHUTDOWN_SPECS} | {ESD_ID}
+        for key, val in self.plc_overrides.items():
+            if key.removesuffix(".trip") not in valid_ids:
+                raise ScenarioError(f"unknown plc_overrides key '{key}'; valid shutdown ids: {sorted(valid_ids)} "
+                                    "(optionally with a '.trip' suffix)")
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                raise ScenarioError(f"plc_overrides['{key}'] must be a number, got {val!r}")
+        for section in ("setpoints", "passwords"):
+            for key in (self.plc_config.get(section) or {}):
+                if key not in valid_ids:
+                    raise ScenarioError(f"unknown shutdown id '{key}' in plc_config.{section}")
         for ev in self.events:
             if "at" not in ev or "type" not in ev:
                 raise ScenarioError(f"event needs 'at' and 'type': {ev}")

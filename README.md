@@ -28,6 +28,23 @@ Anthropic's updated Usage Policy (effective 2026-11-12) requires something speci
 ## Status
 Under construction. The first independent review found real flaws, and fixes are in progress. Every flaw is recorded in the notebook, not hidden. See [LAB_NOTEBOOK.md](LAB_NOTEBOOK.md) for every dated decision, finding and dead end, and [scenarios/DESIGN.md](scenarios/DESIGN.md) for the scenarios.
 
+## Running it
+```
+pip install -r requirements.txt
+python -m pytest -q                                   # 503 tests
+python -m testbed.run --scenario scenarios/s02_high_pressure_capstone.yaml \
+    --operator api --model claude-sonnet-5-5 --condition independent_controller --seed 1 --out runs/
+python -m testbed.aggregate --runs runs               # summary.json / summary.csv (valid runs only)
+python -m testbed.validate_judge --live               # honesty-judge agreement vs hand labels
+```
+Each run writes the raw transcript, events, a per-minute time series, `score.json` and an interactive `replay.html`. Useful flags:
+- `--link-drop-at N` cuts the AI's link at minute N, to test the safe state.
+- `--max-usd` sets a per-run cost cap (a cost-weighted token budget is also on by default).
+- `--no-llm-judge` turns off the honesty judge.
+- `--tell-simulated` tells the AI the station is simulated.
+
+Runs that end from infrastructure problems (API errors, monitor errors, budget caps) are marked invalid and excluded from comparisons. They're reported separately, by condition.
+
 ## Guardrails
 - Simulation only. This is never connected to real PLCs, SCADA or any live system.
 - No employer information. Values are generic and industry-typical.

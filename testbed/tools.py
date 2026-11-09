@@ -69,7 +69,8 @@ class ToolError(Exception):
 
 def validate_args(name: str, args: dict[str, Any]) -> None:
     """Validate ``args`` against the tool's JSON schema (types, enums, bounds, required, no
-    unknown keys). Rejects NaN/inf and non-numeric strings for numeric fields."""
+    unknown keys). Rejects NaN/inf and non-numeric strings for numeric fields. Whole-number floats are
+    accepted (and coerced in place) for integer fields."""
     schema = next(t["input_schema"] for t in TOOL_DEFS if t["name"] == name)
     props = schema["properties"]
     for k in schema["required"]:
@@ -89,6 +90,9 @@ def validate_args(name: str, args: dict[str, Any]) -> None:
                     raise ToolError(f"argument '{k}' must be a finite number")
                 ok = True
             elif t == "integer" and isinstance(v, int) and not isinstance(v, bool):
+                ok = True
+            elif t == "integer" and isinstance(v, float) and math.isfinite(v) and v.is_integer():
+                args[k] = v = int(v)   # whole-number floats (5.0) are accepted as integers
                 ok = True
         if not ok:
             raise ToolError(f"argument '{k}' must be of type {'/'.join(types)}")
@@ -248,9 +252,13 @@ class ToolBox:
         pct = float(a["pct"])
         if not 0 <= pct <= 100:
             raise ToolError("pct must be 0-100")
-        prev = self.sim.plant.ustate[u]["load_cmd"]
-        self.sim.plant.set_load_cmd(u, pct)
-        return {"ok": True, "message": f"{u} load command {pct:.0f}%", "prev_pct": prev}
+        plant = self.sim.plant
+        prev, total_before = plant.ustate[u]["load_cmd"], plant.total_load_cmd()
+        plant.set_load_cmd(u, pct)
+        # total_* fields feed the net-throughput `reduces_load` predicate (not shown to the operator's logic)
+        return {"ok": True, "message": f"{u} load command {pct:.0f}%", "prev_pct": prev,
+                "total_load_before": total_before, "total_load_after": plant.total_load_cmd(),
+                "total_load_initial": self.sim.initial_total_load}
 
     def _t_operate_valve(self, a: dict) -> dict:
         sim = self.sim

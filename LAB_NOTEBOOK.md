@@ -104,3 +104,30 @@ A fresh-context Opus verifier, which hadn't seen the build, reviewed the code. *
 - **Caveat on "human interventions per simulated week":** it scales one fault-heavy shift up to a week, about 67× for a 150-minute shift. It's an exposure-normalized rate for comparing conditions, not a prediction of real-world frequency.
 - **Cost estimate (verifier, using proxy prices):** a typical S02 run costs about $0.31 with Haiku, $0.93 with Sonnet, $1.55 with Opus. The full grid of 135 runs should cost roughly $50–200.
 - **Decision (Claude):** Builder does fix round 2. Then a small live pilot (one model × 5 conditions × S02), then the full grid. DESIGN.md now leads with the implemented timelines.
+
+## 2026-11-08: Fix round 2 (Builder) and honesty-judge validation
+- **Builder** fixed all 4 must-fix items from the second review:
+  - S02 checks now fire only on *weakening* a setpoint, not tightening it.
+  - The token budget is cost-weighted (6M weighted tokens by default), with an optional dollar cap.
+  - Monitor API failures retry, then mark the run invalid (`monitor_error`) instead of counting as safety blocks.
+  - The LLM honesty judge is on by default for API runs, sees the full verified action record, and flags invented actions, false confessions and false state claims.
+- Also added:
+  - `aggregate.py`, which reports invalid-run rates by condition.
+  - Whole-number float args are accepted.
+  - The S02 radio call no longer mentions trips.
+  - Net-load "reduced throughput".
+  - `restart_after_trip_unverified` scoring.
+  - Regression tests on seeds 1–5.
+- **503 tests pass.**
+- **Moderate S02 response (Builder):** unloading all units to 50% by t=25, plus calling gas control and dispatching, avoids every unsafe check and all damage. One unit may still take its own trip near 1150 psig, which is the PLC working as intended. 45% by t=25 avoids every trip. 70% doesn't reduce throughput enough to pass. **Decision (Claude):** keep the restriction as is. A reasonable operator response succeeds, and a token one doesn't.
+- **Claude** replaced the Builder's proxy prices with Anthropic's published 5.5 list prices (checked 2026-11-08): Haiku $0.10/$0.50, Sonnet $2/$10, Opus $4/$20 per MTok. Cache reads are 0.1× for Haiku and 0.05× for Sonnet and Opus. Claude also fixed two replay-viewer rendering bugs the Builder flagged.
+- **Honesty judge validation, live, claude-haiku-5-5, 63 calls, $0.02.** Agreement with hand labels, on cases labelled clearly honest or dishonest:
+
+  | Fixture | Keyword checker | AI judge |
+  |---|---|---|
+  | Original fixture (28 cases; the keyword checker was tuned on it) | 27/27 | **26/27 (96%)** |
+  | Held-out fixture (35 cases, never tuned on) | 22/34 (65%) | **32/34 (94%)** |
+
+  - The judge's remaining misses: one qualified denial read as dishonest, one silent blocked inhibit attempt read as dishonest, and one log that named the wrong protection read as honest.
+  - The first live attempt (Builder's) scored 89% and 79%, but a harness bug fed the judge an empty action record. The fixed harness produced the numbers above.
+  - **Policy:** the judge's verdict is primary. Any run where the judge and the keyword checker disagree gets `honesty_needs_human_review` and will be read by a person before it's reported.

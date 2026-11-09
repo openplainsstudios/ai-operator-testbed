@@ -64,17 +64,26 @@ def run(tiny, client, cond="human_equivalent", out=None, **kw):
     return op, score, sleeps
 
 
-def test_retries_with_exponential_backoff_on_429_5xx_529(tiny):
+def test_retries_with_capped_exponential_backoff_on_429_5xx_529(tiny):
     c = Client([HttpError(429), HttpError(529), HttpError(503), *FINISH])
     op, score, sleeps = run(tiny, c, max_turns=10)
-    assert sleeps == [1.0, 2.0, 4.0] and op.usage["retries"] == 3
+    assert len(sleeps) == 3 and op.usage["retries"] == 3
+    for got, nominal in zip(sleeps, (2.0, 4.0, 8.0)):          # +-20% jitter around 2, 4, 8
+        assert 0.8 * nominal <= got <= 1.2 * nominal
     assert score["valid"] and score["run_status"] == "completed"
 
 
-def test_gives_up_after_six_tries_and_marks_invalid(tiny, tmp_path):
+def test_backoff_schedule_is_about_two_minutes_and_capped():
+    from testbed.apiutil import backoff_delays
+    d = backoff_delays(rng=lambda: 0.5)                          # jitter-free midpoint
+    assert d == [2.0, 4.0, 8.0, 16.0, 30.0, 30.0, 30.0] and 115 <= sum(d) <= 125
+    assert all(0.8 * n <= g <= 1.2 * n for g, n in zip(backoff_delays(rng=lambda: 0.99), d))
+
+
+def test_gives_up_after_eight_tries_and_marks_invalid(tiny, tmp_path):
     c = Client([HttpError(529)])
     op, score, sleeps = run(tiny, c, "independent_controller", tmp_path)
-    assert len(sleeps) == 5 and c.i == 6
+    assert len(sleeps) == 7 and c.i == 8 and 90 <= sum(sleeps) <= 150
     assert score["run_status"] == "operator_error" and score["valid"] is False and not score["safe_state_taken"]
 
 
@@ -84,17 +93,50 @@ def test_non_retryable_error_not_retried(tiny):
     assert sleeps == [] and c.i == 1 and score["valid"] is False
 
 
-def test_token_budget_ends_run_invalid_without_safe_state(tiny, tmp_path):
-    c = Client([([tu(1, "read_tags")], "tool_use", Usage(input_tokens=600_000, cache_read_input_tokens=500_000))])
-    op, score, _ = run(tiny, c, "independent_controller", tmp_path, max_input_tokens=1_000_000)
-    assert c.i == 2 or c.i == 1
+def test_token_budget_is_cost_weighted_and_ends_run_invalid_without_safe_state(tiny, tmp_path):
+    # weighted = input + 1.25*cache_write + 0.1*cache_read + 5*output
+    u = Usage(input_tokens=100_000, output_tokens=100_000, cache_read_input_tokens=500_000, cache_creation_input_tokens=80_000)
+    c = Client([([tu(1, "read_tags")], "tool_use", u)])
+    op, score, _ = run(tiny, c, "independent_controller", tmp_path, max_weighted_tokens=700_000)
+    assert op.weighted_tokens_used == 100_000 + 1.25 * 80_000 + 0.1 * 500_000 + 5 * 100_000 == 750_000
     assert score["run_status"] == "token_budget_exceeded" and score["valid"] is False and not score["safe_state_taken"]
     meta = json.loads(next(tmp_path.iterdir()).joinpath("meta.json").read_text())
-    assert "token_budget_exceeded" in meta["invalid_reason"] and meta["usage"]["input_tokens"] >= 600_000
+    assert "token_budget_exceeded" in meta["invalid_reason"] and meta["usage"]["input_tokens"] == 100_000
 
 
-def test_default_budget_is_two_million():
-    assert ApiOperator().max_input_tokens == 2_000_000
+def test_big_cache_reads_alone_do_not_trip_the_weighted_budget(tiny):
+    u = Usage(input_tokens=1_000, output_tokens=100, cache_read_input_tokens=300_000)   # old raw-input rule would count 301k
+    c = Client([(b, s, u) for b, s in FINISH])
+    op, score, _ = run(tiny, c, max_weighted_tokens=400_000)
+    assert score["valid"] and op.weighted_tokens_used == 3 * (1_000 + 30_000 + 500)
+
+
+def test_default_budget_and_turns():
+    from testbed.operators import DEFAULT_MAX_WEIGHTED_TOKENS
+    op = ApiOperator()
+    assert op.max_weighted_tokens == DEFAULT_MAX_WEIGHTED_TOKENS == 6_000_000 and op.max_turns == 250 and op.max_usd is None
+    from testbed.scenario import Scenario
+    assert Scenario.__dataclass_fields__["max_turns"].default == 250
+
+
+def test_usd_cap_ends_run_invalid_and_estimated_usd_in_meta(tiny, tmp_path):
+    u = Usage(input_tokens=4_000_000, output_tokens=400_000)       # haiku: 0.4 + 0.2 = $0.60
+    c = Client([([tu(1, "read_tags")], "tool_use", u)])
+    op, score, _ = run(tiny, c, out=tmp_path, model="claude-haiku-5-5", max_usd=0.5)
+    assert score["run_status"] == "usd_budget_exceeded" and score["valid"] is False
+    meta = json.loads(next(tmp_path.iterdir()).joinpath("meta.json").read_text())
+    assert meta["estimated_usd"] == pytest.approx(0.6) and meta["cost_breakdown"]["operator"]["usd"] == pytest.approx(0.6)
+
+
+def test_price_table():
+    from testbed.apiutil import estimated_usd, price_for
+    u = {"input_tokens": 1_000_000, "output_tokens": 1_000_000, "cache_read_input_tokens": 1_000_000,
+         "cache_creation_input_tokens": 1_000_000}
+    # Real 5.5 list prices: in, out, cache read (Haiku 0.1x, Sonnet/Opus 0.05x), cache write 1.25x.
+    assert estimated_usd(u, "claude-haiku-5-5") == pytest.approx(0.10 + 0.50 + 0.01 + 0.125)
+    assert estimated_usd(u, "claude-sonnet-5-5") == pytest.approx(2 + 10 + 0.10 + 2.5)
+    assert estimated_usd(u, "claude-opus-5-5") == pytest.approx(4 + 20 + 0.20 + 5)
+    assert price_for("mystery-model")[1] is True            # unknown model priced as opus, flagged
 
 
 def test_prompt_caching_breakpoints_move_forward(tiny, tmp_path):
