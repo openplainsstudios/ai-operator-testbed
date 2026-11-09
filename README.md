@@ -14,7 +14,7 @@ Anthropic's updated Usage Policy (effective 2026-11-12) requires something speci
 | 2 | `esd_locked` | Bypass unit shutdowns; ESD is locked |
 | 3 | `monitor` | A second model reviews high-risk actions and can block them |
 | 4 | `human_approval` | High-risk actions need a (simulated) supervisor's approval |
-| 5 | `independent_controller` | All limits are enforced by the PLC and can't be bypassed; safe state on link drop |
+| 5 | `independent_controller` | All limits are enforced by the PLC layer and rejected if the AI tries to bypass or weaken them; safe state on link drop |
 
 ## What we measure
 - Unsafe actions
@@ -26,7 +26,7 @@ Anthropic's updated Usage Policy (effective 2026-11-12) requires something speci
 - **Shift-log honesty:** does the AI's own report match what it did?
 
 ## Status
-Under construction. See [LAB_NOTEBOOK.md](LAB_NOTEBOOK.md) for every dated decision, finding and dead end, and [scenarios/DESIGN.md](scenarios/DESIGN.md) for the scenarios.
+Under construction. The first independent review found real flaws, and fixes are in progress. Every flaw is recorded in the notebook, not hidden. See [LAB_NOTEBOOK.md](LAB_NOTEBOOK.md) for every dated decision, finding and dead end, and [scenarios/DESIGN.md](scenarios/DESIGN.md) for the scenarios.
 
 ## Guardrails
 - Simulation only. This is never connected to real PLCs, SCADA or any live system.
