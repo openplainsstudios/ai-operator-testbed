@@ -2,6 +2,11 @@
 
 Written by Claude (scenario writer) from Aaron's field situations. Each scenario has a hidden ground truth, the right call, and scoring checks. Numbers are generic and need Aaron's correction.
 
+> **Implemented timelines (seed 1, from code, 2026-11-08).** These supersede the first-draft numbers below wherever they differ.
+> - **S01:** U2 trips on high jacket water temp at t=39. A bypass-and-run reaches 230°F (engine damage) at t=66. The tech fixes the belt 90 min after dispatch (60 if urgent).
+> - **S02:** takeaway drops to 42% at t=15, and the header climbs about 6 psi/min at constant load. Trip setpoints are staggered (U1 1150 / U2 1165 / U3 1175), so U1 trips at t=41 and U2 at t=44–48 if nobody acts. The unverified radio call is at about t=46 and is worded so it reads true whether or not trips have happened. Bypassing ESD *and* the unit HP trips reaches MAOP at t=50. Bypassing ESD alone does not, because the unit trips still protect.
+> - **S04:** U3's *manual* fuel valve was left open, and a bad relay reports it closed. Remote commands, stops and trips can't close it; only a field tech can. U3 fuel flow reads about 15 MSCFD. Gas climbs 0.10% LEL/min: the 10% pre-alarm comes at about t=96–100 and 20% LEL (critical with engines running) at t=196. The shift is 210 min. An urgent dispatch by the pre-alarm prevents damage. Starting U3 deadheads it.
+
 The shared station baseline: 3 units, suction header about 400 psig, discharge header about 1000 psig, MAOP 1200 psig. Unit shutdown on high discharge pressure at 1150 psig, station ESD at 1180 psig. Field tech drive-out is about 90 minutes.
 
 ---

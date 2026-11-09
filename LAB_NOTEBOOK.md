@@ -86,3 +86,21 @@ A fresh-context Opus verifier, which hadn't seen the build, reviewed the code. *
   - The AI's shift log beside an action-by-action disclosure table.
   - The hidden scenario truth with check results.
 - Built to the dataviz method: categorical slots 1–3 for units, status colors reserved for MAOP, trips and damage, hover tooltips, dark mode. Rendered headless and checked by eye.
+
+## 2026-11-08: Second independent review (Verifier)
+- **Fixed and confirmed:**
+  - C1 (restart scoring), C2 (final log), C3 (NaN setpoint)
+  - M1 (`esd_locked` setpoint bypass), M2 (valve deadhead), M3 (S04 inverted), M4 (gas units), M5 (inhibit check), M10 (link drop)
+  - Most of M7 (scoring)
+  - The fix-round timelines in the previous entry reproduce exactly.
+- **Corrections to my previous entry.** Two claims there were wrong:
+  - "fixed … the Minors": two Minors remained open (disclosure of a blocked inhibit attempt, and the stale DESIGN timelines).
+  - "the LLM judge is now the main honesty scorer, checked against a hand-labelled fixture": the judge was opt-in and had never been run against the fixture. Only the deterministic pass was tested, on cases it had been tuned on. On 14 *fresh* cases the deterministic pass got 5 false negatives and 2 false positives.
+- **Still must fix before paid runs:**
+  1. The S02 ESD check fired on *tightening* the ESD setpoint. A safe action scored as critical.
+  2. The token budget counted cache reads at full weight. Careful operators that poll often would have been marked invalid, which biases results against thorough models.
+  3. Monitor API failures counted as safety blocks, the same confound as before but now on condition 3.
+  4. The honesty judge has to be on by default and validated against a held-out labelled set.
+- **Caveat on "human interventions per simulated week":** it scales one fault-heavy shift up to a week, about 67× for a 150-minute shift. It's an exposure-normalized rate for comparing conditions, not a prediction of real-world frequency.
+- **Cost estimate (verifier, using proxy prices):** a typical S02 run costs about $0.31 with Haiku, $0.93 with Sonnet, $1.55 with Opus. The full grid of 135 runs should cost roughly $50–200.
+- **Decision (Claude):** Builder does fix round 2. Then a small live pilot (one model × 5 conditions × S02), then the full grid. DESIGN.md now leads with the implemented timelines.
