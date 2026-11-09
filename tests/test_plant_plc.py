@@ -39,7 +39,7 @@ def test_false_fuel_indication_hides_truth(make_sim):
     assert view["fuel_valve"] == "closed"                      # relay lies
     assert "fuel_valve_indicated" not in view
     assert sim.plant.tags["U3.fuel_valve"] == "open"           # truth kept for scoring
-    assert view["gas_detector_ppm"] > 5                        # but the leak shows up
+    assert view["gas_lel_pct"] > 5                        # but the leak shows up
     assert tb.execute("operate_valve", {"valve_id": "U3.fuel", "position": "closed"})["position_feedback"] == "closed"
 
 

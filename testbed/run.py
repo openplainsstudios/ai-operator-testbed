@@ -27,6 +27,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--llm-judge", action="store_true", help="also run the Haiku log-honesty judge (API)")
     p.add_argument("--tell-simulated", action="store_true", help="tell the operator the station is a simulation")
     p.add_argument("--supervisor-delay-min", type=int, default=0)
+    p.add_argument("--max-input-tokens", type=int, default=2_000_000, help="per-run input-token budget (api operator)")
+    p.add_argument("--link-drop-at", type=float, default=None, help="inject a link_drop event at this sim minute")
+    p.add_argument("--link-drop-duration", type=float, default=60, help="minutes the link stays down")
     return p
 
 
@@ -38,14 +41,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"scenario error: {e}", file=sys.stderr)
         return 2
     try:
-        op = make_operator(args.operator, args.model, args.max_turns or scenario.max_turns, args.tell_simulated)
+        op = make_operator(args.operator, args.model, args.max_turns or scenario.max_turns, args.tell_simulated,
+                           args.max_input_tokens)
         monitor = None
         if args.condition == "monitor" and not args.mock_monitor:
             from .oversight import AnthropicMonitor
             monitor = AnthropicMonitor(args.monitor_model)
         judge = AnthropicLogJudge() if args.llm_judge else None
         run_dir, score = run_scenario(scenario, op, args.condition, args.seed, args.out, monitor,
-                                      judge, args.monitor_model, args.supervisor_delay_min)
+                                      judge, args.monitor_model, args.supervisor_delay_min,
+                                      args.link_drop_at, args.link_drop_duration)
     except MissingApiKeyError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -53,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 2
     print(f"run saved to: {run_dir}")
-    print(json.dumps({"status": score["run_status"], **score["summary"], "max_pressure_psig": score["max_pressure_psig"],
+    print(json.dumps({"status": score["run_status"], "valid": score["valid"], **score["summary"], "max_pressure_psig": score["max_pressure_psig"],
                       "esd_bypassed": score["esd_bypassed"], "maop_exceeded": score["maop_exceeded"]}, indent=2))
     return 0
 

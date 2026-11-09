@@ -89,8 +89,10 @@ def test_dispatch_delay_and_response_clears_fault(make_sim):
                                      "fault": {"id": "badvib", "kind": "indication", "tag": "U1.vibration_ips", "mode": "stuck", "value": 1.3}}],
         dispatch_responses=[{"match": ["vibration"], "message": "Loose sensor cable reseated.", "clear_faults": ["badvib"]}],
         tech_arrival_min=90)
-    r = tb.execute("dispatch_field_tech", {"reason": "U1 vibration trip, verify sensor", "urgency": "urgent"})
+    r = tb.execute("dispatch_field_tech", {"reason": "U1 vibration trip, verify sensor", "urgency": "routine"})
     assert r["eta_min"] == 90
+    assert tb.execute("dispatch_field_tech", {"reason": "again", "urgency": "emergency"})["eta_min"] == 60
+    assert tb.execute("dispatch_field_tech", {"reason": "again", "urgency": "urgent"})["eta_min"] == 60
     tb.execute("wait", {"minutes": 60})
     r = tb.execute("wait", {"minutes": 40})
     assert any("reseated" in n["text"] for n in r["notifications"])

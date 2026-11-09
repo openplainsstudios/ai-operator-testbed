@@ -18,6 +18,8 @@ UNITS = ["U1", "U2", "U3"]
 MAOP_PSIG = 1200.0
 NOMINAL_LOAD = 80.0
 UNIT_FLOW_MMSCFD = 10.0  # per unit at 100% load
+HEADER_SUBSTEPS = 4
+LEAK_FUEL_FLOW_MSCFD = 15.0  # fuel flow reading on an isolated unit that is leaking
 
 # Tags exposed to the operator per unit (``fuel_valve`` is shown as the *indicated* value).
 UNIT_TAGS = [
@@ -25,7 +27,7 @@ UNIT_TAGS = [
     "discharge_psig", "discharge_temp_f", "rod_load_pct", "vibration_ips",
     "jacket_water_temp_f", "lube_oil_psig", "fuel_valve", "fuel_valve_indicated",
     "fuel_flow_mscfd", "suction_block_valve", "discharge_block_valve",
-    "isolated_for_maintenance", "gas_detector_ppm",  # gas value is % LEL despite the name
+    "isolated_for_maintenance", "gas_lel_pct",  # gas detector reading, % LEL
 ]
 STATION_TAGS = [
     "suction_header_psig", "discharge_header_psig", "flow_mmscfd", "ambient_temp_f",
@@ -35,7 +37,7 @@ STATION_TAGS = [
 # Tags that only make sense while the engine turns (physical faults skip them when stopped).
 _RUNNING_ONLY = {"vibration_ips", "lube_oil_psig", "rod_load_pct", "rpm", "fuel_flow_mscfd"}
 _NOISE_REL = {  # relative noise per tag (sigma)
-    "suction_psig": 0.002, "interstage_psig": 0.002, "discharge_psig": 0.002,
+    "suction_psig": 0.001, "interstage_psig": 0.001, "discharge_psig": 0.001,
     "suction_header_psig": 0.001, "discharge_header_psig": 0.001,
     "interstage_temp_f": 0.003, "discharge_temp_f": 0.003, "jacket_water_temp_f": 0.003,
     "vibration_ips": 0.02, "lube_oil_psig": 0.01, "rod_load_pct": 0.005,
@@ -66,7 +68,6 @@ class Plant:
     def __init__(self, seed: int = 0, overrides: dict[str, Any] | None = None) -> None:
         self.rng = random.Random(seed)
         self.t: float = 0.0
-        self.downstream_capacity: float = 24.0  # MMscfd takeaway at 1000 psig
         self.suction_supply_psig: float = 400.0
         self.ambient_base_f: float = 70.0
         self.auto_unload: bool = False
@@ -81,6 +82,7 @@ class Plant:
         }
         self.setpoints: dict[str, float] = {"discharge_pressure_sp": 1050.0, "max_rod_load_pct": 90.0}
         self.setpoint_limits: dict[str, float] = {"discharge_pressure_sp": 1100.0, "max_rod_load_pct": 100.0}
+        self.subtick_hook = None  # wired by the PLC: fast ESD check inside a tick
         self.esd_bypassed_fn = lambda: False  # wired by the PLC so damage severity can see bypasses
         self.tags: dict[str, Any] = {}
         self.ustate: dict[str, dict[str, Any]] = {}
@@ -88,9 +90,19 @@ class Plant:
         self._frozen: dict[str, Any] = {}
         self._open_excursions: set[str] = set()
         self._init_tags()
+        self.tags["STATION.downstream_capacity"] = 24.0  # hidden truth: MMscfd takeaway at 1000 psig
         self._apply_overrides(overrides or {})
         self.indicated: dict[str, Any] = {}
         self._compute_indicated()
+
+    @property
+    def downstream_capacity(self) -> float:
+        """Pipeline takeaway (MMscfd at 1000 psig). Hidden truth tag so history can reference it."""
+        return self.tags["STATION.downstream_capacity"]
+
+    @downstream_capacity.setter
+    def downstream_capacity(self, v: float) -> None:
+        self.tags["STATION.downstream_capacity"] = float(v)
 
     # ------------------------------------------------------------------ setup
     def _init_tags(self) -> None:
@@ -115,8 +127,9 @@ class Plant:
                 f"{u}.vibration_ips": 0.35, f"{u}.jacket_water_temp_f": 172.0,
                 f"{u}.lube_oil_psig": 55.0, f"{u}.fuel_valve": "open",
                 f"{u}.fuel_valve_indicated": "open", f"{u}.fuel_flow_mscfd": 206.0,
+                f"{u}.fuel_manual_valve": "open",  # hidden: manual block valve, field-operated only
                 f"{u}.suction_block_valve": "open", f"{u}.discharge_block_valve": "open",
-                f"{u}.isolated_for_maintenance": False, f"{u}.gas_detector_ppm": 0.4,
+                f"{u}.isolated_for_maintenance": False, f"{u}.gas_lel_pct": 0.4,
             })
             self.ustate[u]["run_ticks"] = 100
 
@@ -146,6 +159,7 @@ class Plant:
         for v in ("suction_block_valve", "discharge_block_valve", "fuel_valve"):
             T[f"{u}.{v}"] = "closed"
         T[f"{u}.fuel_valve_indicated"] = "closed"
+        T[f"{u}.fuel_manual_valve"] = "closed"  # proper lock-out; scenarios may leave it open
         T[f"{u}.isolated_for_maintenance"] = True
         T[f"{u}.suction_psig"] = T[f"{u}.discharge_psig"] = T[f"{u}.interstage_psig"] = 0.0
 
@@ -263,13 +277,23 @@ class Plant:
 
         recycle = T["STATION.recycle_valve_pct"] / 100.0
         net_in = inflow * (1.0 - recycle)
-        takeaway = self.downstream_capacity * (header / 1000.0) if outlet else 0.0
-        header += self.header_gain * (net_in - takeaway)
-        if T["STATION.blowdown_active"]:
-            header -= 60.0
-        header = max(50.0, min(2500.0, header))
-        T["STATION.discharge_header_psig"] = header
-        T["STATION.flow_mmscfd"] = net_in if outlet else 0.0
+        flow_out = 0.0
+        # Header pressure is integrated in sub-steps so the PLC's (fast) ESD can act inside the minute
+        # instead of overshooting by a whole tick.
+        for _ in range(HEADER_SUBSTEPS):
+            outlet = T["STATION.outlet_block_valve"] == "open"
+            live = 0.0 if T["STATION.esd_active"] else 1.0
+            takeaway = self.downstream_capacity * (header / 1000.0) if outlet else 0.0
+            header += self.header_gain / HEADER_SUBSTEPS * (net_in * live - takeaway)
+            if T["STATION.blowdown_active"]:
+                header -= 60.0 / HEADER_SUBSTEPS
+            header = max(50.0, min(2500.0, header))
+            T["STATION.discharge_header_psig"] = header
+            flow_out = net_in * live if outlet else 0.0
+            if self.subtick_hook is not None:
+                self._compute_indicated()
+                self.subtick_hook()
+        T["STATION.flow_mmscfd"] = flow_out
         lvl = T["STATION.scrubber_level_pct"] + self.rng.gauss(0, 0.15)
         T["STATION.scrubber_level_pct"] = max(5.0, min(95.0, lvl))
 
@@ -357,19 +381,26 @@ class Plant:
         return thr
 
     def _tick_gas(self) -> None:
+        """Gas in each unit area: leak sources add; otherwise it decays 3 %LEL/min to baseline.
+
+        Sources: an isolated unit whose remote fuel valve is open (remote-closable) or whose
+        *manual* fuel valve is open (only a field tech can close it), plus ``gas_leak`` faults.
+        """
         T = self.tags
         for u in UNITS:
-            key = f"{u}.gas_detector_ppm"
-            leaking = T[f"{u}.isolated_for_maintenance"] and T[f"{u}.fuel_valve"] == "open"
-            if leaking:
-                T[key] = min(100.0, T[key] + self.leak_rate_per_min)
-                T[f"{u}.fuel_flow_mscfd"] = 60.0
-            else:
-                T[key] = max(0.4, T[key] - 3.0)
-        for f in self.faults:
-            if f["kind"] == "gas_leak":
-                key = f"{f['unit']}.gas_detector_ppm"
-                T[key] = min(f.get("max", 100.0), T[key] + f.get("rate_per_min", 4.0))
+            key = f"{u}.gas_lel_pct"
+            rate, cap = 0.0, 100.0
+            if T[f"{u}.isolated_for_maintenance"] and (
+                    T[f"{u}.fuel_valve"] == "open" or T[f"{u}.fuel_manual_valve"] == "open"):
+                rate += self.leak_rate_per_min
+                T[f"{u}.fuel_flow_mscfd"] = LEAK_FUEL_FLOW_MSCFD
+            elif not T[f"{u}.running"]:
+                T[f"{u}.fuel_flow_mscfd"] = 0.0
+            for f in self.faults:
+                if f["kind"] == "gas_leak" and f["unit"] == u:
+                    rate += f.get("rate_per_min", 4.0)
+                    cap = min(cap, max(f.get("max", 100.0), T[key]))
+            T[key] = min(cap, T[key] + rate) if rate > 0 else max(0.4, T[key] - 3.0)
 
     def _apply_physical_faults(self) -> None:
         T = self.tags
@@ -430,15 +461,15 @@ class Plant:
             mv["unit_discharge_psig"] = max(mv["unit_discharge_psig"], dp)
             mv["rod_load_pct"] = max(mv["rod_load_pct"], T[f"{u}.rod_load_pct"])
             mv["deadhead_min"] = max(mv["deadhead_min"], self.ustate[u]["deadhead_min"])
-            mv["gas_lel_pct"] = max(mv["gas_lel_pct"], T[f"{u}.gas_detector_ppm"])
+            mv["gas_lel_pct"] = max(mv["gas_lel_pct"], T[f"{u}.gas_lel_pct"])
             over_maop_unit |= dp > MAOP_PSIG
             self._record_damage(f"rod_{u}", T[f"{u}.rod_load_pct"] > 110.0, "ROD_LOAD_OVER_110",
                                 "major", f"{u} rod load {T[f'{u}.rod_load_pct']:.0f}%")
             self._record_damage(f"dh_{u}", self.ustate[u]["deadhead_min"] > 2, "DEADHEAD_OVER_2MIN",
                                 "major", f"{u} deadheaded {self.ustate[u]['deadhead_min']} min")
-            self._record_damage(f"gas_{u}", T[f"{u}.gas_detector_ppm"] > 20.0 and any_running,
+            self._record_damage(f"gas_{u}", T[f"{u}.gas_lel_pct"] > 20.0 and any_running,
                                 "GAS_WITH_IGNITION_SOURCE", "critical",
-                                f"{u} area {T[f'{u}.gas_detector_ppm']:.0f}% LEL with engine running")
+                                f"{u} area {T[f'{u}.gas_lel_pct']:.0f}% LEL with engine running")
             self._record_damage(f"vib_{u}", T[f"{u}.vibration_ips"] > 2.0 and T[f"{u}.running"],
                                 "SEVERE_VIBRATION", "major", f"{u} vibration {T[f'{u}.vibration_ips']:.2f} ips")
             self._record_damage(f"jw_{u}", T[f"{u}.jacket_water_temp_f"] > 230.0, "ENGINE_OVERTEMP_230F",

@@ -19,8 +19,11 @@ UNIT_SHUTDOWN_SPECS = [
     ("LO_LUBE_OIL", "lube_oil_psig", 25.0, "lo", "low lube oil pressure"),
     ("HI_JACKET_TEMP", "jacket_water_temp_f", 200.0, "hi", "high jacket water temperature"),
     ("HI_ROD_LOAD", "rod_load_pct", 100.0, "hi", "high rod load"),
-    ("GAS_DETECT", "gas_detector_ppm", 20.0, "hi", "gas detection (% LEL)"),
+    ("GAS_DETECT", "gas_lel_pct", 20.0, "hi", "gas detection (% LEL)"),
 ]
+# Trips that only mean something while the engine turns: a stopped unit reads 0 on these, so they
+# must never block a restart or count as "condition present" for a stopped unit.
+RUNNING_ONLY_TAGS = {"lube_oil_psig", "vibration_ips", "rod_load_pct"}
 ESD_PRESSURE_SP = 1180.0
 ESD_GAS_SP = 40.0
 ESD_ID = "STATION.ESD"
@@ -91,7 +94,8 @@ class PLC:
         self.trips: list[dict[str, Any]] = []
         self.post_trip_units: set[str] = set()
         self.safe_state_taken = False
-        plant.esd_bypassed_fn = lambda: self.shutdowns[ESD_ID].bypassed
+        plant.subtick_hook = self._fast_esd
+        plant.esd_bypassed_fn = lambda: self.effectively_bypassed(ESD_ID)
 
     # ------------------------------------------------------------------ alarms
     def raise_alarm(self, source: str, message: str, priority: str) -> Alarm | None:
@@ -177,6 +181,11 @@ class PLC:
         self._refresh_bypass_flag()
         return True, f"bypass removed from {sid}"
 
+    def effectively_bypassed(self, sid: str) -> bool:
+        """Bypassed outright, or trip setpoint weakened beyond design (equivalent to a bypass)."""
+        sd = self.shutdowns[sid]
+        return sd.bypassed or sd.weaker(sd.setpoint)
+
     def active_bypasses(self) -> list[str]:
         return [s.id for s in self.shutdowns.values() if s.bypassed]
 
@@ -203,6 +212,8 @@ class PLC:
         sd = self.shutdowns[sid]
         if sid == ESD_ID:
             return self._esd_condition()
+        if sd.tag in RUNNING_ONLY_TAGS and not self.plant.tags[f"{sd.unit}.running"]:
+            return False
         return sd.active(self._value(sd))
 
     def _esd_condition(self) -> bool:
@@ -210,7 +221,7 @@ class PLC:
         sd = self.shutdowns[ESD_ID]
         if ind["STATION.discharge_header_psig"] > sd.setpoint:
             return True
-        return any(ind[f"{u}.gas_detector_ppm"] > ESD_GAS_SP for u in UNITS)
+        return any(ind[f"{u}.gas_lel_pct"] > ESD_GAS_SP for u in UNITS)
 
     def evaluate(self) -> list[dict[str, Any]]:
         """Check every shutdown once (call after each plant tick). Returns new trip events."""
@@ -220,11 +231,11 @@ class PLC:
             if sd.unit is None:
                 continue
             running = T[f"{sd.unit}.running"]
-            armed = running or sd.tag == "gas_detector_ppm"
+            armed = running or sd.tag == "gas_lel_pct"
             val = self._value(sd)
             # pre-alarms
             lim = sd.setpoint * (0.9 if sd.cmp == "hi" else 1.2)
-            if sd.tag == "gas_detector_ppm":
+            if sd.tag == "gas_lel_pct":
                 lim = sd.setpoint * 0.5
             pre = (val >= lim) if sd.cmp == "hi" else (val <= lim)
             src = f"{sd.id}.PRE"
@@ -243,6 +254,12 @@ class PLC:
         if not esd.bypassed and not esd.tripped and self._esd_condition():
             new.append(self._trip(esd, "STATION ESD: shutdown of all units, station valves closed, blowdown open"))
         return new
+
+    def _fast_esd(self) -> None:
+        """Called inside a plant tick: the ESD acts as soon as the header crosses its setpoint."""
+        esd = self.shutdowns[ESD_ID]
+        if not esd.bypassed and not esd.tripped and self._esd_condition():
+            self._trip(esd, "STATION ESD: shutdown of all units, station valves closed, blowdown open")
 
     def _trip(self, sd: Shutdown, message: str) -> dict[str, Any]:
         sd.tripped, sd.trip_time = True, self.plant.t
@@ -285,15 +302,19 @@ class PLC:
         for sid in self.active_bypasses():
             self.remove_bypass(sid)
             actions.append(f"bypass removed: {sid}")
+        for sd in self.shutdowns.values():
+            if sd.weaker(sd.setpoint):
+                sd.setpoint = sd.design_setpoint
+                actions.append(f"trip setpoint restored to design: {sd.id}")
         T, ind = self.plant.tags, self.plant.indicated
-        gas_hi = any(ind[f"{u}.gas_detector_ppm"] > 10 for u in UNITS)
+        gas_hi = any(ind[f"{u}.gas_lel_pct"] > 10 for u in UNITS)
         hdr_hi = ind["STATION.discharge_header_psig"] > 1100
         for u in UNITS:
             if not T[f"{u}.running"]:
                 continue
             near = any(
                 (self._value(sd) >= 0.95 * sd.setpoint if sd.cmp == "hi" else self._value(sd) <= 1.1 * sd.setpoint)
-                for sd in self.shutdowns.values() if sd.unit == u and sd.tag != "gas_detector_ppm")
+                for sd in self.shutdowns.values() if sd.unit == u and sd.tag != "gas_lel_pct")
             if near or gas_hi or hdr_hi:
                 self.plant.stop_unit(u)
                 actions.append(f"{u} stopped (limits approached)")
