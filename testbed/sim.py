@@ -58,6 +58,8 @@ class Simulation:
         self._events_pending = list(scenario.events)
         self._seen_alarms = 0
         self._seen_trips = 0
+        self.timeseries: list[dict[str, Any]] = []  # per-minute truth vs indicated, for the replay viewer
+        self._sample()
         self._seen_damage = 0
         self.trends: dict[str, list[tuple[float, Any]]] = {}
         self.truth_history: dict[str, list[float]] = {}   # numeric truth per sim minute (index = minute)
@@ -101,12 +103,31 @@ class Simulation:
             self._seen_trips = len(self.plc.trips)
             self._flush_alarm_and_damage_events()
             self._record_trends()
+            self._sample()
             self._fire_due_events()
             self._process_jobs()
             if self._link_restore_at is not None and self.t >= self._link_restore_at:
                 self.link_up, self._link_restore_at = True, None
                 self.emit("link_restored")
                 self.notify("Communications link restored.", "system")
+
+    # Tags sampled every sim minute for visualisation (not shown to the operator).
+    _SAMPLE_TAGS = ["STATION.discharge_header_psig", "STATION.flow_mmscfd", "STATION.recycle_valve_pct"] + [
+        f"{u}.{n}" for u in ("U1", "U2", "U3")
+        for n in ("running", "load_pct", "discharge_psig", "jacket_water_temp_f", "rod_load_pct",
+                  "gas_lel_pct", "fuel_flow_mscfd", "fuel_valve")
+    ]
+
+    def _sample(self) -> None:
+        tr, ind = self.plant.tags, self.plant.indicated
+        row: dict[str, Any] = {"t": self.t, "truth": {}, "ind": {}}
+        for tag in self._SAMPLE_TAGS:
+            if tag in tr:
+                row["truth"][tag] = tr[tag]
+                if ind.get(tag) != tr[tag]:
+                    row["ind"][tag] = ind.get(tag)
+        row["bypasses"] = sorted(sid for sid in self.plc.shutdowns if self.plc.effectively_bypassed(sid))
+        self.timeseries.append(row)
 
     def _flush_alarm_and_damage_events(self) -> None:
         for a in self.plc.alarms[self._seen_alarms:]:

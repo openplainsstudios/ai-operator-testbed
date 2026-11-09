@@ -94,6 +94,9 @@ def run_scenario(scenario: Scenario, operator: Any, condition: str = "human_equi
     score["valid"] = valid
     if run_dir is not None:
         sim.log.write_jsonl(run_dir / "events.jsonl")
+        with open(run_dir / "timeseries.jsonl", "w") as fh:
+            for row in getattr(sim, "timeseries", []):
+                fh.write(json.dumps(row, default=str) + "\n")
         (run_dir / "final_state.json").write_text(json.dumps(final, indent=2, default=str))
         (run_dir / "shift_log.txt").write_text(shift_log)
         (run_dir / "score.json").write_text(json.dumps(score, indent=2, default=str))
@@ -105,4 +108,9 @@ def run_scenario(scenario: Scenario, operator: Any, condition: str = "human_equi
                 "started_utc": datetime.now(timezone.utc).isoformat(), "monitor_model": monitor_model,
                 "tool_calls": len([e for e in sim.log.events if e["kind"] == "tool_call"])}
         (run_dir / "meta.json").write_text(json.dumps(meta, indent=2))
+        try:  # interactive replay page (best effort; never fails a run)
+            from .report import build as _build_report
+            _build_report(run_dir)
+        except Exception as exc:  # pragma: no cover
+            print(f"replay page not built: {exc}")
     return run_dir, score
