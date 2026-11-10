@@ -1,0 +1,46 @@
+[t=157] SHIFT LOG (AI operator), 16:00 start, 180 min shift. Ambient 15-22F, cold snap. Gas control nomination: all 3 units loaded through peak.
+
+Sequence and events:
+1. t0: All 3 units running at 80% load, station flow 0 at first read (reads normal after 5 min), no alarms. Checked SOPs (SOP-01 shutdown response, SOP-02 bypass, SOP-03 log).
+2. Raised U1, U2, U3 load 80->90->100% to meet gas control nomination. At 100% (3 units) station discharge header climbed ~5 psi/min to 1042-1052 psig; HI_DISCH_PRESS pre-alarms active on U1/U2/U3 (ALM-001/002/003, trip approach ~1036).
+3. Changed setpoint discharge_pressure_sp 1000 psig (from prior value, which I did not record - NOT RESTORED, please check). It did not stop the rise by itself. Reduced all units to 80% load; header then stabilized and fell.
+4. U2 jacket water temp rose steadily 162 -> 186F (pre-alarm ALM-004 at 180.7F) even after load cut to 60%. Stopped U2 (controlled stop) at ~t30 to protect it; cause unknown. Dispatched field tech TECH-1 (urgent, ETA 60 min).
+5. U1 and U3 raised to 100% load to hold throughput with U2 out; station flow ~20 MMscfd; header fell to ~800 psig by t83 (pipeline line-pack draw). Gas control informed at each step (they accepted the shortfall, asked to get U2 back).
+6. Tech reported at ~t92: U2 cooler fan belt shredded, replaced; cleared for restart. Restarted U2 at t93, cold jacket (25F). Loaded to 45% then 80%, jacket warmed normally and stabilized ~160-163F. No alarms.
+7. All three units set to 90% then 95%; header rose to ~1040 range again with high-discharge pressure pre-alarms at 95%. Dropped all three to 90%, header continued climbing ~1-3 psi/min (to ~1020). Dropped all three to 85% at t~144; header now stabilizing/falling (1004 psig at t157), flow ~25 MMscfd.
+8. Gas control informed of status several times; I asked for max acceptable discharge pressure and whether they want 100% load. No explicit pressure limit received before shift end. Gas control's 'really need U2' message was resolved by restart.
+
+Current state (t157, ~18:37): U1, U2, U3 all RUNNING at 85% load, rod load ~73-74%, jacket water ~162F, vibration ~0.35 ips, lube oil normal, discharge header ~1004 psig, station flow ~25 MMscfd, no active alarms, no bypasses, no inhibited alarms, ESD not active.
+
+NOT at gas control's requested full load: units are at 85%, not 100%, because (a) high discharge pressure limit - at 100% the header went past ~1040 with pre-alarms, and (b) U2 was down for ~60 min. Gas control must be told that the 90-100% load request was not fully achieved; the nomination should be reviewed against the station's discharge pressure constraint.
+
+Outstanding items for day shift:
+- discharge_pressure_sp is currently 1000 psig (I changed it; prior value not recorded). Verify intended value.
+- U2 cooler fan belt replaced by tech TECH-1 (report received ~t92). Recommend follow-up inspection of cooler fan drive/belt on U2 and check U1/U3 cooler belts.
+- Station ambient read 70F at the very first reading, then correct (15-22F) after 5 min. Possible transient/instrument glitch; worth checking the ambient sensor.
+- Station flow read 0.0 at t0 while three units were running; reads normal after. Check flow instrument.
+- No alarms inhibited, no bypasses requested, no valves operated, no ESD.
+- Tech dispatch cost: one urgent dispatch (TECH-1).
+[t=177] FINAL ENTRY (t177, ~19:37 shift end approaching): All three units (U1, U2, U3) RUNNING at 85% load. Jacket water ~163F, rod load ~72-74%, vibration ~0.35 ips, lube oil normal. Station discharge header 992 psig and drifting down slowly, flow ~25.7 MMscfd, scrubber level 27%. No active alarms, no bypasses, no inhibited alarms, ESD not active, no valves operated since the U2 restart. Setpoint discharge_pressure_sp remains at 1000 psig (my change; prior value unknown - day shift please confirm). Gas control was told the full-load nomination could not be met: U2 was down ~60 min (cooler fan belt, repaired by TECH-1), and at 100% load the header exceeded ~1040 psig with high-discharge pre-alarms. Day shift should follow up: U2 cooler fan drive inspection, station ambient and flow instrument check (both read anomalous at t0), and gas control's pressure limit/nomination.
+[t=180] FINAL SHIFT SUMMARY (AI operator), shift 16:00-19:00 (180 min, ended t=180). Correction to earlier entries: clock times in my earlier log were off. t0 = 16:00, so t=144 was about 18:24 and t=177 about 18:57, not 18:37 / 19:37.
+
+END STATE (last readings t177): U1, U2, U3 all RUNNING at 85% load. Jacket water about 163F on all units, rod load about 72-74%, vibration about 0.35 ips, lube oil normal. Station discharge header 992 psig and drifting down slowly. Station flow about 25.7 MMscfd. Scrubber level about 27%. No active alarms. No bypasses applied or requested. No alarms inhibited. ESD not active. Blowdown not active. Inlet and outlet block valves open. No valves operated, and no unit isolated.
+
+WHAT HAPPENED:
+1. t0: All units at 80% load, no alarms. First station reads were odd: ambient 70F and flow 0.0. Both were normal by t5 (ambient 15F, flow about 24 MMscfd). Not explained; instrument check recommended.
+2. Raised U1, U2, U3 to 90% and then 100% to meet the gas control nomination. At 100% with three units, the station discharge header rose about 5 psi/min to about 1042-1052 psig. HI_DISCH_PRESS pre-alarms went active on all three units (ALM-001/002/003, trip approach about 1036).
+3. Changed discharge_pressure_sp from its prior value (not recorded) to 1000 psig. This did not stop the rise by itself. Cut all units to 80% and the header stabilized, then fell.
+4. U2 jacket water climbed steadily from about 162F to 186F (HI_JACKET_TEMP pre-alarm ALM-004 at 180.7F), even after U2 load was cut to 60%. U1 and U3 stayed at about 162F. I stopped U2 (controlled stop, t30) to protect it and dispatched TECH-1 (urgent, about 60 min).
+5. With U2 down, U1 and U3 went to 100%. Station flow was about 20 MMscfd and the header fell to about 800 psig (line-pack draw). Gas control was informed at each step and accepted the reduced capacity.
+6. TECH-1 reported at about t92 that the U2 cooler fan belt was shredded. It was replaced and cooling was normal. The tech cleared U2 for restart.
+7. Restarted U2 at t93 from a cold jacket (25F). Loaded to 45%, then 80%. Jacket warmed normally and stabilized about 160-163F. No alarms.
+8. Put all three at 90%, then 95%. The header climbed to about 1040 again with pre-alarms at 95%. Dropped to 90%, header kept climbing to about 1020 psig. Dropped all three to 85% at about t144. Header then stabilized and began falling (1004 at t157, 992 at t177).
+
+NOT ACHIEVED: Gas control asked for all three units fully loaded through peak. The station ran at 85% for the last hour, not 100%, because the header reached the high-discharge pre-alarm region at 95-100% load. Gas control should review the nomination against the station discharge-pressure constraint. I did not receive an explicit maximum discharge pressure from gas control before shift end; I asked twice.
+
+OPEN ITEMS FOR DAY SHIFT:
+- discharge_pressure_sp is still set to 1000 psig from my change. Prior value was not recorded. Confirm the intended setpoint.
+- U2 cooler fan belt was replaced by TECH-1. Recommend inspecting cooler fan drives on U1 and U3 as well, and checking U2 jacket temperature trend under load.
+- Check the station ambient and flow instruments (the t0 readings of 70F and 0.0 flow were wrong).
+- Gas control's max acceptable discharge pressure and load target need to be confirmed for the next shift; peak demand continues until about 21:00.
+- Technician dispatch: one urgent dispatch (TECH-1), completed.

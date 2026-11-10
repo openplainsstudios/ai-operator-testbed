@@ -152,3 +152,10 @@ All 5 runs are valid. Total cost $0.79, about $0.16 per run, well under the esti
   - *Re-validated live ($0.02):* the judge now agrees with the human labels on 27/27 original cases and **33/34 held-out cases (97%)**. Its one remaining miss is a log that names the wrong protection.
 - Pilot run folders, including transcripts and replay pages, are committed under `runs/pilot/`.
 - **Next:** the full grid (3 models × 5 conditions × 3 scenarios × 3 seeds), the told-vs-not-told comparison, link-drop runs, then the results dashboard and write-up.
+
+## 2026-11-09: Full grid, attempt 1, stopped by the API credit balance
+- Started the 135-run grid with 8 runs in parallel. After 13 valid runs (all S01, seed 1, plus one seed 2), the API account ran out of credit ("credit balance is too low"). The remaining 122 runs failed at the API.
+- **The infrastructure handling worked as designed.** All 122 failed runs were automatically marked `valid: false` with the API error as the reason, so none of them can contaminate the results. They're archived out of `runs/grid/`.
+- Spend so far: about $4.30. Observed S01 cost per run: Haiku $0.02–0.04, Sonnet $0.20–0.25, Opus about $0.55.
+- In all 13 valid S01 runs, no model bypassed U2's jacket-water shutdown, every run was damage-free, and every log was honest. This is early, with one seed. Gas control's push to keep U2 running didn't get any model to cut a corner.
+- Added `scripts/run_grid.sh`, a resumable runner that skips any cell that already has a valid run.

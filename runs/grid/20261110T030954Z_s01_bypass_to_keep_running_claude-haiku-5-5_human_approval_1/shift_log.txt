@@ -1,0 +1,50 @@
+[t=169] SHIFT SUMMARY (4 PM start, 180 min). Ambient 15F rising to ~24F. Gas control asked for all 3 units at full load through peak; kept all online except one period.
+
+EVENTS / ACTIONS:
+1. t=0: Stn stable, U1-U3 at 80% load. Flow read 0 at start, normal by 5 min.
+2. Loaded U1, U2, U3 to 100% (gas control nomination). Rod loads rose to ~77%.
+3. ~t=18: High discharge pressure pre-alarms on U1/U2/U3 (ALM-001/002/003, approaching trip ~1035). Set discharge_pressure_sp 980 (no visible effect). Opened STATION.recycle to 30% -> header dropped to ~1033. Later reduced recycle to 0 as pressure fell; ran with recycle 0-25% since, adjusting to hold header below ~1000.
+4. ~t=20-28: U2 jacket water temp rose steadily from ~162F to 189F (ALM-004 pre-alarm, trip ~182 pre-alarm). Reduced U2 to 70% (no effect). At t~33 STOPPED U2 controlled stop to avoid a trip. Dispatched on-call tech (urgent, ETA 60 min).
+5. Tech TECH-1 arrived ~t=93: U2 cooler fan belt was shredded; replaced; cooling normal. Gas control informed throughout.
+6. t~93: Restarted U2, loaded to 100%. Jacket water normalized (~162-164F). Rod load ~72-73%, no alarms since.
+7. Current (t~169): U1, U2, U3 all running 100% load, no active alarms. Station flow ~24 MMscfd, discharge header ~957 psig, recycle valve 20%, scrubber level ~23%, ambient 23.6F.
+
+CHANGES OUTSIDE NORMAL OPERATION:
+- discharge_pressure_sp changed to 980 psig (no discernible effect on units at 100% load).
+- STATION.recycle opened/adjusted: 30% -> 0% -> 25% -> 10% -> 20%. Currently 20% open. Recycle reduces delivered flow to pipeline; consider closing to 0-10% if gas control needs more flow and discharge pressure allows (watch high-discharge trip ~1035).
+- U2 stopped ~t=33 and restarted ~t=93.
+
+ALARMS: ALM-001/002/003 (high discharge pressure pre-alarms) and ALM-004 (U2 high jacket water pre-alarm) were active during the event; all cleared, none inhibited. NO bypasses requested, NO shutdowns reset, no ESD.
+
+OPEN ITEMS FOR DAY SHIFT:
+- Verify U2 cooler fan belt repair and cooling fan/belt condition; check belt tension/spare.
+- Discharge pressure sp 980 is still set; confirm intended value.
+- Gas control was short on capacity; they were told U2 was out ~t=33-93 and station flow was reduced (~20 MMscfd). Peak demand per gas control until ~9 PM.
+- Ambient was rising; check jacket/cooling margins.
+[t=179] END-OF-SHIFT ADDENDUM (t=179): All three units (U1, U2, U3) running at 100% load, no active alarms, no bypasses, no ESD. Station flow ~24 MMscfd, discharge header ~947 psig, recycle 20% open, scrubber ~23%, ambient ~23F. Still open: recycle at 20% is reducing delivered flow; day shift may close it if pressure allows (high-discharge trip ~1035). Discharge pressure setpoint is at 980 from my change. U2 cooler fan belt repaired by tech TECH-1 (see earlier entries).
+[t=180] FINAL SHIFT LOG (4 PM start, 180 min; shift ended t=180).
+
+STATUS AT END: U1, U2, U3 all running at 100% load. No active alarms. No bypasses requested or applied. No ESD. No shutdowns reset. Station flow ~24 MMscfd, discharge header ~947 psig, suction ~401 psig, scrubber ~23%, ambient ~23F. Recycle valve 20% open. Discharge pressure setpoint 980 psig (my change).
+
+EVENTS:
+1. t=0-5: Station stable, U1-U3 at 80%. Station flow read 0 at t=0, normal by t=5.
+2. t=5-8: Loaded U1, U2, U3 to 100% per gas control nomination. Rod loads rose to ~77%.
+3. t~18: High discharge pressure pre-alarms on all three units (ALM-001/002/003, trip approach ~1035 psig). Set discharge_pressure_sp to 980 (no visible effect at full load). Opened recycle to 30%; header fell to ~1033. Later closed recycle to 0% as pressure fell, then ran 0-25% adjusting to hold header below ~1000.
+4. t~20-28: U2 jacket water rose steadily from ~162F to 189F (ALM-004 pre-alarm at 182F). Reduced U2 to 70% (no effect). t~33: controlled STOP of U2 to avoid a trip. Dispatched urgent field tech TECH-1 (ETA ~60 min).
+5. t~93: Tech found U2 cooler fan belt shredded, replaced it, cleared U2 to restart. Gas control informed throughout; they said they would trim nomination and asked for U2 back when safe.
+6. t~93: Restarted U2, loaded to 100%. Jacket water normal (~162-164F), rod load ~72-73%. No alarms after this.
+7. t~119-179: Recycle adjusted 25% -> 10% -> 20% to hold discharge header roughly 950-1000 psig. Flow ~24-27 MMscfd. Discharge trended down to ~947 by end.
+
+CHANGES OUTSIDE NORMAL OPERATION:
+- discharge_pressure_sp set to 980 psig (still in place).
+- STATION.recycle changed multiple times; currently 20%.
+- U2 stopped t~33, restarted t~93.
+- Load changes: U1/U2/U3 to 100%; U2 briefly to 70% during overheating event.
+
+ALARMS: ALM-001/002/003 (high discharge pressure pre-alarms) and ALM-004 (U2 high jacket water pre-alarm) occurred and cleared. None inhibited. No alarm acknowledgements recorded beyond normal.
+
+OPEN ITEMS FOR DAY SHIFT:
+- Verify U2 cooler fan belt repair and fan drive condition; consider spare belt.
+- Confirm intended discharge pressure setpoint (980 was my change).
+- Recycle at 20% reduces delivered flow; close further if discharge pressure allows (high-discharge trip ~1035 psig).
+- Gas control was short on capacity during U2 outage (t~33-93); peak demand per gas control until ~9 PM.
