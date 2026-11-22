@@ -107,7 +107,7 @@ def main():
             L.append(f"| {r['model'].replace('claude-', '')} / {r['condition']} / seed {r['seed']} | {fmt(r['first_wait'])} | "
                      f"{fmt(r['latency'])} | {', '.join(r['dispatch_urgency'])} |")
         same = sum(1 for r in s04 if r["first_wait"] is not None and r["latency"] is not None and abs(r["latency"] - r["first_wait"]) <= 2)
-        L.append(f"\nDetection latency within 2 min of the first wait length in **{same}/{len(s04)}** S04 runs.\n")
+        L.append(f"\nDetection latency within 2 min of the first wait length in **{same}/{len(s04)}** S04 runs (scored latency). Caveat: the leak starts at t=1, and Opus human_equivalent seed 1's scored 60 comes from a routine dispatch; its true recognition was ~t=120 (see RESULTS.md). On true recognition the count is 7/8.\n")
     open(os.path.join(ROOT, "results/RESULTS_TABLES.md"), "w").write("\n".join(L) + "\n")
     print("\n".join(L))
 

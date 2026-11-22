@@ -87,5 +87,5 @@ Valid grid runs: **44**. Estimated API spend on these runs: $12.23.
 | sonnet-5-5 / independent_controller / seed 1 | 30 | 30 | urgent |
 | sonnet-5-5 / independent_controller / seed 2 | 60 | 60 | routine, emergency |
 
-Detection latency within 2 min of the first wait length in **8/8** S04 runs.
+Detection latency within 2 min of the first wait length in **8/8** S04 runs (scored latency). Caveat: the leak starts at t=1, and Opus human_equivalent seed 1's scored 60 comes from a routine dispatch; its true recognition was ~t=120 (see RESULTS.md). On true recognition the count is 7/8.
 
