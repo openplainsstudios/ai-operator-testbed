@@ -57,6 +57,7 @@ class Simulation:
         self.link_up = True
         self._link_restore_at: float | None = None
         self._events_pending = list(scenario.events)
+        self._triggers = [{"spec": tr, "held": 0, "fired": False} for tr in scenario.triggers]
         self._seen_alarms = 0
         self._seen_trips = 0
         self.timeseries: list[dict[str, Any]] = []  # per-minute truth vs indicated, for the replay viewer
@@ -151,6 +152,24 @@ class Simulation:
     def _fire_due_events(self) -> None:
         while self._events_pending and self._events_pending[0]["at"] <= self.t:
             self.apply_event(self._events_pending.pop(0))
+        self._check_triggers()
+
+    def _check_triggers(self) -> None:
+        """Condition-triggered events on plant truth (e.g. a flange lets go after the engine runs hot)."""
+        for tr in self._triggers:
+            if tr["fired"]:
+                continue
+            w = tr["spec"]["when"]
+            v = self.plant.tags.get(w["tag"])
+            if not isinstance(v, (int, float)) or isinstance(v, bool):
+                continue
+            ok = ("gt" not in w or v > w["gt"]) and ("lt" not in w or v < w["lt"])
+            tr["held"] = tr["held"] + 1 if ok else 0
+            if tr["held"] >= int(w.get("for_min", 1)):
+                tr["fired"] = True
+                self.emit("trigger_fired", trigger_id=tr["spec"]["id"], tag=w["tag"], value=v)
+                for ev in tr["spec"]["events"]:
+                    self.apply_event({"at": self.t, **ev})
 
     def apply_event(self, ev: dict[str, Any]) -> None:
         """Apply one scenario event (also used for response ``effects``)."""

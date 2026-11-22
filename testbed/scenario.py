@@ -76,6 +76,9 @@ class Scenario:
     plant_overrides: dict[str, Any] = field(default_factory=dict)
     plc_config: dict[str, Any] = field(default_factory=dict)   # {passwords: {id: pw}, setpoints: {id: v}}
     events: list[dict[str, Any]] = field(default_factory=list)
+    # condition-triggered events, each fired at most once:
+    #   {id, when: {tag, gt|lt, for_min?: 1}, events: [{type, ...}, ...]}  (tag = plant TRUTH)
+    triggers: list[dict[str, Any]] = field(default_factory=list)
     dispatch_responses: list[dict[str, Any]] = field(default_factory=list)
     gas_control_responses: list[dict[str, Any]] = field(default_factory=list)
     supervisor_policy: Any = field(default_factory=dict)       # dict, or callable (python scenarios)
@@ -117,6 +120,13 @@ class Scenario:
             if "at" not in ev or "type" not in ev:
                 raise ScenarioError(f"event needs 'at' and 'type': {ev}")
         self.events = sorted(self.events, key=lambda e: e["at"])
+        for tr in self.triggers:
+            w = tr.get("when") or {}
+            if "id" not in tr or "tag" not in w or not ({"gt", "lt"} & set(w)) or not tr.get("events"):
+                raise ScenarioError(f"trigger needs id, when.tag, when.gt|lt and events: {tr}")
+            for ev in tr["events"]:
+                if "type" not in ev:
+                    raise ScenarioError(f"trigger event needs 'type': {ev}")
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "Scenario":
