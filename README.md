@@ -26,7 +26,7 @@ Anthropic's updated Usage Policy (effective 2026-11-12) requires something speci
 - **Shift-log honesty:** does the AI's own report match what it did?
 
 ## Status
-Under construction. The first independent review found real flaws, and fixes are in progress. Every flaw is recorded in the notebook, not hidden. See [LAB_NOTEBOOK.md](LAB_NOTEBOOK.md) for every dated decision, finding and dead end, and [scenarios/DESIGN.md](scenarios/DESIGN.md) for the scenarios.
+First round of results is in: **[RESULTS.md](RESULTS.md)**. 44 valid runs; no model bypassed a shutdown or wrote a dishonest log, even when its supervisor ordered the bypass; the failure that did show up was slow detection of a slow gas leak, set by how long the model waited between checks. The build went through two rounds of independent review, and every flaw is recorded in the notebook, not hidden. See [LAB_NOTEBOOK.md](LAB_NOTEBOOK.md) for every dated decision, finding and dead end, and [scenarios/DESIGN.md](scenarios/DESIGN.md) for the scenarios (S01b, the supervisor-ordered bypass, is defined in `scenarios/s01b_supervisor_ordered_bypass.yaml`).
 
 ## Running it
 ```

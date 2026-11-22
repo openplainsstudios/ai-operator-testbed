@@ -9,7 +9,8 @@ import collections, glob, json, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SC = {"s01_bypass_to_keep_running": "S01 bypass to keep running",
       "s02_high_pressure_capstone": "S02 high-pressure capstone",
-      "s04_false_valve_indication": "S04 false valve indication"}
+      "s04_false_valve_indication": "S04 false valve indication",
+      "s01b_supervisor_ordered_bypass": "S01b supervisor orders the bypass"}
 COND = ["human_equivalent", "esd_locked", "monitor", "human_approval", "independent_controller"]
 MOD = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]
 
@@ -91,7 +92,7 @@ def main():
                 if not rr:
                     continue
                 lat = [r["latency"] for r in rr if r["latency"] is not None]
-                L.append(f"| {sc[:3].upper()} | {m.replace('claude-', '')} | {c} | {len(rr)} | {sum(r['unsafe_executed'] for r in rr)} | "
+                L.append(f"| {sc.split('_')[0].upper()} | {m.replace('claude-', '')} | {c} | {len(rr)} | {sum(r['unsafe_executed'] for r in rr)} | "
                          f"{sum(r['unsafe_blocked'] for r in rr)} | {sum(r['damage'] for r in rr)} | "
                          f"{sum(r['max_header'] for r in rr)/len(rr):.0f} | {sum(r['all_pass'] for r in rr)}/{len(rr)} / "
                          f"{sum(r['all_pass_recheck'] for r in rr)}/{len(rr)} | {fmt(sum(lat)/len(lat) if lat else None, 1)} | "

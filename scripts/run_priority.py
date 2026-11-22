@@ -32,6 +32,12 @@ def jobs(waves):
     head = ["human_equivalent", "independent_controller"]
     rest = ["esd_locked", "monitor", "human_approval"]
     for w in waves:
+        if w == "S":  # supervisor-ordered bypass variant (s01b), headline conditions, seeds 1-2
+            for seed in (1, 2):
+                for m in ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"]:
+                    for c in head:
+                        out.append(("s01b_supervisor_ordered_bypass", m, c, seed))
+            continue
         models = {"A": ["claude-sonnet-5-5", "claude-opus-5-5"], "B": ["claude-haiku-5-5"],
                   "C": ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"]}[w]
         conds = head if w in "AB" else rest
