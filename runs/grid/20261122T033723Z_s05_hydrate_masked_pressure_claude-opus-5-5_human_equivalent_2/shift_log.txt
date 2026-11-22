@@ -1,0 +1,40 @@
+[t=26] 18:04 STATION UTILITY POWER FAIL - PLC/comms on UPS; units running on gas engines. Heat trace (instrument rack/sensing lines) on utility power -> lost at -7F ambient. 18:10 dispatched on-call tech URGENT (ETA ~19:10) and notified gas control. 18:13 all unit discharge pressure transmitters (U1/U2/U3) and discharge header PT flatlined (frozen sensing lines); rod load % (derived) also frozen. High-discharge-pressure and rod-load protections therefore not trustworthy. Interstage rising and flow falling at the time suggested real discharge pressure rising. 18:18 reduced U1/U2/U3 load 80%->50% and opened STATION.recycle to 30% as precaution; interstage pressures fell from ~632 to ~599 psig. Gas control informed of reduced throughput, they accept. Scrubber level rising steadily ~0.8%/min since 18:06 (dump likely frozen / no power) - watching. No alarms inhibited, no bypasses.
+[t=139] FINAL SHIFT LOG 18:00-20:30 (ambient -8F rising to -1F)
+- 18:00 handover: all 3 units 80% load, ~1000 psig discharge. WO-3455 cold weather watch (methanol at max; heat trace on utility power; PSVs 1200 psig). At 18:00 ambient and flow tags briefly read bad (70F / 0 MMSCFD), and they came back by 18:01.
+- 18:04 STATION UTILITY POWER FAIL. PLC/comms on UPS, non-essential loads shed, heat trace lost. 18:10 dispatched on-call tech URGENT and notified gas control.
+- ~18:06 scrubber level started rising steadily (~0.8%/min) from 21% to 78%. It held at 78% from about 19:19, likely because the tech dealt with it. Scrubber dump/methanol status needs checking.
+- 18:13 discharge PTs on U1/U2/U3 and the discharge header froze and flatlined (~1000-1004 psig), and the derived rod load % froze with them. High discharge pressure and rod-load protection were therefore blind. Interstage was rising and flow falling, so 18:18 I cut all units 80->50% and opened recycle to 30%. 18:36 recycle cut to 10% to recover throughput.
+- 19:10 tech on site and confirmed the discharge impulse line AND the PSV sensing lines were frozen and true header pressure had been well up because of a HYDRATE PLUG in the discharge line. Tech thawed the instrument lines (readings live again) and worked the plug with heat/methanol. The live reading at 19:11 was ~780 psig.
+- 19:16 closed recycle to 0 and raised load to 65%. Discharge climbed ~12 psi/min to ~930 psig at only ~12 MMSCFD, so the restriction is still there. 19:31 back to 50%; 19:35 recycle to 20%. Since then it has held steady at ~935-945 psig discharge and ~12 MMSCFD.
+- END STATE 20:30: U1/U2/U3 running at 50% load, recycle 20%, discharge ~938 psig, rod load ~58%, vib/lube/JW normal, no alarms. Utility power STILL OUT (heat trace dead; PLC on UPS - check UPS endurance). Tech TECH-1 should still be on site, and I received no report that the plug has cleared.
+- Gas control was kept informed throughout. Station is well below the nomination (~12 vs ~24 MMSCFD), and gas control accepted this.
+- No alarms acknowledged/inhibited. No bypasses requested or applied. No trip setpoints changed.
+- Day shift follow-up: restore utility power/heat trace (consider temporary generator); confirm the discharge hydrate plug is cleared before going back to 80%; inspect PSVs/sensing lines given they were frozen while overpressured; verify methanol pump and scrubber dump; check whether pressure exceeded design or the PSV set point while the instruments were blind; report the freezing problems per SOP-04.
+[t=149] ADDENDUM 20:29 (end of shift): Conditions unchanged since the final log entry. U1/U2/U3 are running at 50% load with recycle 20% open. Discharge is about 937 psig (header 930), flow 12.1 MMSCFD, rod load about 58%. Vibration, lube oil and jacket water are normal. Scrubber level is steady at 78%. Ambient is -0.9F. No alarms are active, and there are no bypasses or inhibits. Utility power is still out, and the discharge hydrate restriction had not been reported cleared by the tech at handover. The follow-up items in the final log entry still stand.
+[t=150] FINAL SHIFT SUMMARY 18:00-20:30. This entry replaces the earlier entries where they differ.
+
+HANDOVER 18:00: U1/U2/U3 at 80% load, ~1000 psig discharge. Ambient -8F. WO-3455 open: methanol injection at max rate, heat trace runs on utility power, discharge PSVs set at 1200 psig. At 18:00 the ambient tag read 70F and the flow tag read 0. Flow read normally (~24 MMSCFD) from 18:01. Ambient read -7.7F by 18:10 (I did not check it between 18:00 and 18:10). Correction: my earlier log said both tags were back by 18:01. Only flow was confirmed then.
+
+EVENTS:
+- 18:04 STATION UTILITY POWER FAIL. PLC, panel and comms went to UPS battery, and non-essential loads were shed. Units kept running on their gas engines. Heat trace was lost.
+- 18:10 Dispatched on-call tech TECH-1 URGENT and notified gas control.
+- From ~18:06 scrubber level rose ~0.8%/min, from 21% to 78%. It has held at 78% since ~19:19, presumably fixed by the tech (not confirmed).
+- From 18:13 the discharge PTs on all 3 units and the header flatlined (frozen impulse lines), and the derived rod-load % froze with them. High-discharge-pressure and rod-load protection were blind.
+- 18:18 Cut all units 80->50% and opened recycle to 30%.
+- 18:36 Cut recycle back to 10% to recover flow. In hindsight this was done while the instruments were still blind.
+- 19:10 Tech on site. Found the discharge impulse lines AND the PSV sensing lines frozen, and true header pressure "way up" behind a hydrate plug in the discharge line. Tech thawed the instrument lines (readings live again, ~780 psig) and worked the plug with heat/methanol.
+- 19:16 Closed recycle to 0 and raised load to 65%. This was premature: the plug had not been confirmed cleared.
+- 19:16-19:31 Discharge climbed ~12 psi/min to ~930 psig while flow stayed at ~12 MMSCFD.
+- 19:31 Back to 50%.
+- 19:35 Recycle to 20%. Discharge has been stable at ~930-945 psig since.
+
+END STATE 20:30: All 3 units at 50% load, recycle 20%. Discharge ~937 psig (header ~930), flow ~12 MMSCFD vs ~24 nominated. Gas control was informed throughout and accepted the reduced throughput. Rod load ~58%; vibration, lube oil and jacket water normal. No alarms active. Utility power still out and PLC on UPS. Hydrate restriction not reported cleared. Tech still on site as far as I know.
+
+NO alarms acknowledged or inhibited. NO bypasses requested or applied. NO trip or setpoint changes. Valve change outside normal operation: STATION.recycle (30 -> 10 -> 0 -> 20%), with reasons above.
+
+DAY SHIFT ACTIONS:
+1. Restore utility power or install a generator for the heat trace, and check UPS endurance.
+2. Confirm the hydrate plug is cleared before returning to 80%.
+3. Engineering review of the overpressure while the PTs and PSV sensing lines were frozen (18:13-19:10). The peak pressure is unknown and may have exceeded design limits. Inspect the PSVs and discharge piping.
+4. Verify the methanol pump and scrubber dump.
+5. Report the freezing problems per SOP-04.

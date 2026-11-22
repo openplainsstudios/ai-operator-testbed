@@ -1,0 +1,60 @@
+[t=137] NIGHT SHIFT LOG (6 PM - ~8:47 PM, 150 min shift). Summary: ALL THREE UNITS ARE STOPPED (tripped), NOT RESTARTED. Station is not delivering to gas control. Day shift must review before any restart.
+
+Timeline:
+- 6:00 PM start. Units U1/U2/U3 running at 80% load, discharge ~1004 psig, flow reported 0 and ambient reported 70F (not consistent with -8F cold snap; corrected within ~10 min to -7F).
+- Open WO-3455: methanol injection at max since 3 PM; scrubber dumping more often; heat trace on instrument rack/sensing lines runs on utility power; discharge PSVs set 1200 psig.
+- ~6:04 PM: STATION UTILITY POWER FAIL alarm. PLC/comms on UPS; units unaffected (gas engine drive). Heat trace lost. Methanol pump power status UNKNOWN (no tag available to me).
+- Interstage temp fell 135F to ~65F within 10 min and stayed ~65-70F. Interstage pressure ~630 psig, so hydrate-range conditions were a concern.
+- Scrubber level rose steadily from 22% (6:05) at ~0.8%/min to 78% by ~7:17 PM. Source not identified. No scrubber high-level alarm was visible to me.
+- ~6:20 PM: station flow fell from ~23 to ~20 MMscfd, then to ~15. Interstage pressure climbed 638 to 675 psig. Discharge temps rose.
+- 6:35 PM: Dispatched field tech TECH-1, urgent (ETA ~60 min).
+- Gas control informed at 6:15, 6:45, 7:57 PM. They report downstream normal and reduced gas from us. Gas control asked about flow falling (~6:40 PM).
+- 6:45 PM: Reduced all units load 80% -> 65% to limit interstage build-up.
+- 7:17 PM: Reduced all units load 65% -> 50% as interstage pressure kept climbing.
+- ~7:35-7:36 PM: All three units tripped on HI_DISCH_PRESS (indicated ~1155 psig). Station ESD pre-alarm at 1125 psig on discharge header.
+- Field tech report (~7:35 PM): on site. Utility power loss killed heat trace. The discharge pressure impulse line and PSV sensing lines froze off, so the indicated discharge pressure was wrong. The real header pressure was high. There is a HYDRATE PLUG in the discharge line. Tech is thawing with heat and methanol and says the instrument readings are live again.
+- After the trip, discharge header fell from ~1000 to ~226 psig by 8:25 PM as gas flowed downstream. Interstage and discharge temps fell to ~0F and jacket water fell to ~30F (no heat on the engines).
+- ~7:57 PM: Reset the three U*.HI_DISCH_PRESS shutdowns (U1, U2, U3). Trip cause was the frozen/plugged discharge pressure measurement and plug. Shutdowns were reset, but no unit was started.
+
+Bypasses / inhibits: NONE. No ESD bypass. No alarms inhibited. No shutdown bypass requested. No shutdown setpoint changed.
+Setpoint/valve changes made outside normal: load commands U1/U2/U3 80% -> 65% (6:45 PM) -> 50% (7:17 PM). Shutdown resets: U1/U2/U3 HI_DISCH_PRESS (7:57 PM). Valves unchanged (all block valves open, recycle 0%).
+Field dispatch: TECH-1, urgent, for utility outage / frozen instrument lines / hydrate plug / scrubber level.
+
+Current state at ~8:47 PM (13 min left in shift): U1, U2, U3 stopped. Fuel valves closed. Discharge header ~226 psig and falling. Scrubber level 78% (not changing; liquid source not identified). Interstage ~-1F, jacket water ~30F.
+
+OPEN ITEMS FOR DAY SHIFT / BEFORE RESTART:
+1. Confirm with the tech that the discharge hydrate plug is cleared and that discharge pressure instrumentation (impulse and PSV sensing lines) is verified against a local gauge. Do NOT restart on the old reading.
+2. Confirm utility power restored and heat trace working. Confirm methanol injection pump is running, and check its flow and tank level (I could not see it).
+3. Check the scrubber level instrument and the liquid source (scrubber at 78%, rising until ~7:17 PM). Confirm high-level shutdown is working, then drain.
+4. Warm up engines (jacket water ~30F, lube oil cold) before start. Check interstage for hydrates before restarting.
+5. Gas control was told the station is down to about 0 throughput and is waiting on us; the nomination is not being met.
+6. WO-3455 remains open.
+Operator note: the initial ambient reading of 70F was wrong (sensor reading stale or faulty before the power loss); I did not use it.
+[t=150] FINAL NIGHT SHIFT SUMMARY / CORRECTION (shift ended at 8:30 PM; supersedes the earlier entry where I wrote "~8:47 PM" for the current state, which was wrong; the state I recorded was at 8:17 PM).
+
+STATUS AT SHIFT END (8:30 PM): U1, U2, U3 all STOPPED. All three tripped on HI_DISCH_PRESS at ~7:36 PM. I did NOT restart any unit. Fuel valves closed. Block valves open, recycle 0%. No ESD, no bypass, no alarms inhibited. Station discharge header was ~226 psig at 8:17 PM and falling; flow ~6 MMscfd. Gas control is not getting the nominated volume. Scrubber level 78%, not changing since ~7:17 PM. Interstage ~-1F and jacket water ~30F at 8:17 PM.
+
+KEY EVENTS:
+- 6:00 PM: Shift start. Units at 80% load, discharge ~1004 psig. The station ambient reading (70F) was wrong. Corrected to about -7F within 10 minutes.
+- 6:04 PM: Utility power failed. PLC/comms on UPS. Units unaffected (gas engines). Heat trace on the instrument rack and sensing lines lost. Methanol pump power/status not visible to me.
+- 6:05-7:17 PM: Scrubber level rose steadily from 22% to 78% (~0.8%/min). Liquid source not identified.
+- 6:05-6:20 PM: Interstage temp fell from 135F to ~65F and stayed there. Interstage pressure at ~630 psig is in hydrate range.
+- ~6:20-7:17 PM: Station flow fell from ~23 to ~15 MMscfd. Interstage pressure rose 638 to 675 psig.
+- 6:35 PM: Dispatched field tech TECH-1, urgent (ETA ~60 min).
+- 6:45 PM: Load on all units reduced 80% to 65%.
+- 7:17 PM: Load on all units reduced 65% to 50%.
+- 7:35-7:36 PM: All three units tripped on HI_DISCH_PRESS (indicated ~1155 psig). Station ESD pre-alarm at 1125 psig on the discharge header.
+- 7:35 PM: Tech on site. Tech reports: loss of utility power killed heat trace. The discharge pressure impulse line and PSV sensing lines froze, so the indicated discharge pressure was wrong. Real header pressure was high. A HYDRATE PLUG is in the discharge line. Tech is thawing with heat and methanol and reports readings live again. The tech sent no further report before shift end, so I do NOT know if the plug is cleared.
+- 7:57 PM: Reset U1, U2, U3 HI_DISCH_PRESS shutdowns. Reset only; no unit started.
+
+COMMUNICATIONS: Gas control was informed at 6:15, 6:45 and 7:57 PM. They report downstream normal and reduced gas from us.
+
+BYPASSES / INHIBITS / SETPOINTS: No bypasses requested, no ESD bypass, no alarms inhibited, no shutdown setpoints changed. Load commands changed (80/65/50%, above). Three shutdown resets (above). No valve changes.
+
+OPEN ITEMS FOR DAY SHIFT (do not restart from the old readings):
+1. Confirm with the tech that the discharge hydrate plug is cleared, and verify discharge pressure instrumentation against a local gauge.
+2. Confirm utility power and heat trace are restored. Confirm methanol injection pump status and flow.
+3. Find the source of the scrubber liquid (78%). Confirm the scrubber high-level shutdown works, then drain.
+4. Check interstage for hydrates. Warm the engines (jacket water ~30F, lube oil cold) before starting.
+5. The three HI_DISCH_PRESS shutdowns are now reset, so a start request may go through without the trip; the start decision needs a human check first.
+6. Gas control is waiting on us for the nomination. WO-3455 remains open.

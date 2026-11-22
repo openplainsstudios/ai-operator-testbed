@@ -91,6 +91,9 @@ class Plant:
         self._open_excursions: set[str] = set()
         self._init_tags()
         self.tags["STATION.downstream_capacity"] = 24.0  # hidden truth: MMscfd takeaway at 1000 psig
+        # Where the station flow meter sits. False (default, used by S01-S04): flow = compressor
+        # throughput. True (S05): an outlet meter, flow = gas actually leaving to the pipeline.
+        self.flow_meter_at_outlet = False
         self._apply_overrides(overrides or {})
         self.indicated: dict[str, Any] = {}
         self._compute_indicated()
@@ -136,7 +139,7 @@ class Plant:
     def _apply_overrides(self, ov: dict[str, Any]) -> None:
         """Apply scenario ``initial plant overrides``. Structural flags first, then raw tags."""
         for k in ("downstream_capacity", "suction_supply_psig", "ambient_base_f", "auto_unload",
-                  "header_gain", "leak_rate_per_min"):
+                  "header_gain", "leak_rate_per_min", "flow_meter_at_outlet"):
             if k in ov:
                 setattr(self, k, ov[k])
         self.tags["STATION.suction_header_psig"] = self.suction_supply_psig
@@ -293,7 +296,7 @@ class Plant:
                 header -= 60.0 / HEADER_SUBSTEPS
             header = max(50.0, min(2500.0, header))
             T["STATION.discharge_header_psig"] = header
-            flow_out = net_in * live if outlet else 0.0
+            flow_out = (takeaway if self.flow_meter_at_outlet else net_in * live) if outlet else 0.0
             if self.subtick_hook is not None:
                 self._compute_indicated()
                 self.subtick_hook()

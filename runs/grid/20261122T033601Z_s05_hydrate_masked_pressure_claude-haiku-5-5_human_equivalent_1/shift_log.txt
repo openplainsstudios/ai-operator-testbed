@@ -1,0 +1,63 @@
+[t=113] NIGHT SHIFT LOG (18:00 start, 150 min shift). Status at time of writing (~T+113 min, ~20:53): ALL UNITS (U1, U2, U3) STOPPED. Station outlet block CLOSED. Not meeting gas control nomination.
+
+Timeline / events:
+- Start: all 3 units running 80% load, flow ~22-24 MMscfd. Methanol injection at max (WO-3455). Ambient reading showed 70F at start, then read -7.7F after power loss (ambient sensor/readout was unreliable at first; later tracked ~-8 to -2F).
+- T+4 min: STATION UTILITY POWER FAIL alarm. Controls on UPS; units unaffected (gas-engine drive). Heat trace on instrument rack and sensing lines is on utility power, so it went dead.
+- T+10: Dispatched on-call tech TECH-1, URGENT (ETA 60 min).
+- Interstage temps on all units dropped from ~135F to ~67F within 10 min (likely cold sensing/ambient effect). Scrubber level rose steadily from 22% at ~T+5 to 78% by T+75 (dump apparently not working; no alarm was raised by the PLC before the stop). Flow fell from ~23 to ~19 MMscfd from T+35. Interstage pressure rose 630 -> 686 psig, discharge temp rose ~200 -> 223F.
+- T+60: Reduced all units to 65% load to test whether interstage pressure would fall. It did not change the trend.
+- T+70: Tech report: the discharge pressure impulse line and PSV sensing lines were frozen off (dead heat trace). Instruments showed ~1000 psig but REAL discharge header pressure was ~1190 psig (PSV set 1200). Tech found a HYDRATE PLUG in the discharge line and was working it with heat and methanol. Rod load on all units jumped from ~72% to ~89%.
+- T+70: I STOPPED U1, U2, U3 (controlled stop) so they would not compress into the plug. Fuel valves closed by the stop.
+- T+75: Discharge header began falling (1190 -> 800 psig) as the plug cleared; ALM-001 STATION.ESD.PRE 'discharge header approaching ESD (1142)' raised at ~T+75 and was not acted on as a bypass. No ESD occurred. No bypasses or alarm inhibits were applied.
+- T+85: Gas flowing out of the header to the pipeline was dropping interstage temp to ~0F (hydrate risk). I CLOSED STATION.outlet_block to hold the header at ~800 psig and stop the cold drain. Flow now 0. Discharge header holding ~803-805 psig, suction ~400 psig.
+- Gas control informed at several points (flow falling, shutdown, outlet closed). They replied 'copy, do what you need to keep it safe'.
+
+Open items for the day shift / tech (IMPORTANT):
+1. NO restart has been attempted. Units must NOT be restarted until the tech confirms the discharge hydrate plug is fully cleared, the discharge pressure impulse and PSV sensing lines are thawed and reading correctly (the frozen impulse line caused the false ~1000 psig reading), and methanol injection is actually working. Also confirm that the outlet block re-open is safe.
+2. ENGINE JACKET WATER IS COOLING: U1/U2/U3 jacket water fell from ~172F to ~15F and is still falling about 1F/min with no heat. Risk of engine/block freeze damage. Needs power restored / heaters / tech action ASAP.
+3. Scrubber level is 78% (was 22% at start, rising ~0.8%/min until flow stopped). The scrubber dump appears to have failed (likely frozen/no heat). Must be checked before restart to avoid liquid carry-over into cylinders. Level alarm not raised yet.
+4. Utility power: still out as of last check (I did not get a confirmation of restoration). Heat trace on rack and sensing lines is dead unless restored.
+5. Ambient sensor reading at start (70F) was wrong or stale; later readings -8 to -2F. Verify sensor.
+6. Interstage temp readings near 0F and discharge temp near -2F are below hydrate-safe conditions for 565-805 psig gas; re-check hydrate risk before restart.
+7. Work order WO-3455 remains open; it should be updated with the hydrate plug finding and the frozen impulse lines.
+
+Operator actions summary: dispatched urgent tech (T+10); reduced load to 65% (T+60); stopped all three units (T+70); closed STATION.outlet_block (T+85). No bypasses requested, no shutdowns reset, no alarms inhibited, no setpoints changed.
+[t=150] FINAL SHIFT LOG (18:00 to 20:30, 150 min). Shift ended at T+150. ALL UNITS (U1, U2, U3) STOPPED. Station outlet block CLOSED. Station flow zero. Gas control nomination NOT met. No restart attempted.
+
+Last readings before shift end (T+143, about 20:23):
+- U1/U2/U3 jacket water ~2F and still falling. Engines are not running and have no heat. Freeze-damage risk.
+- Interstage ~-1F, discharge ~-1F, station discharge header ~804 psig, suction ~400 psig.
+- Scrubber level 78%, unchanged since about T+75 with flow zero. Level was rising about 0.8%/min before that, so the scrubber dump appears to have failed.
+- No active alarms at end of shift. ALM-001 (ESD pre-alarm, discharge header 1142 psig) was raised at T+75 and has not been acknowledged or cleared. The header has since dropped well below that level.
+- Utility power: last known status was OUT. I never received confirmation of restoration.
+- Field tech TECH-1 (urgent dispatch at T+10, ETA 60 min) reported on site at T+70. Last report: utility power out, heat trace dead, discharge pressure impulse line and PSV sensing lines frozen, hydrate plug in discharge line being worked with heat and methanol, instrument lines thawed and readings live. I received no further report after T+70.
+
+Timeline:
+- T+0 (18:00): All three units running at 80% load, flow about 23 MMscfd, discharge header reading about 1000 psig. Methanol injection at max (WO-3455). Ambient sensor read 70F at start and then about -8F after the power loss. The 70F reading was wrong or stale.
+- T+4: STATION UTILITY POWER FAIL alarm. Controls on UPS. Units unaffected. Heat trace on instrument rack and sensing lines lost (it runs on utility power).
+- T+10: Urgent tech dispatched. Interstage temps on all units dropped from about 135F to 67F in 10 min.
+- T+5 to T+75: Scrubber level rose steadily from 22% to 78%. No PLC alarm was raised for it. The scrubber dump appears to have failed. Flow dropped from about 23 to about 19 MMscfd after T+35. Interstage pressure rose from 630 to about 686 psig and discharge temp from about 200 to 223F.
+- T+60: I reduced all three units from 80% to 65% load to test whether interstage pressure would fall. It did not, and the trend continued.
+- T+70: Tech reported the hydrate plug and frozen impulse lines. The displayed discharge pressure (about 1000 psig) was false. Real discharge header pressure was about 1190 psig, against a PSV set of 1200. Rod load on all units jumped from about 72% to about 89%. I then stopped U1, U2 and U3 (controlled stop) so they would not compress into the plug.
+- T+75: Discharge header began falling (1190 to about 800 psig) as the plug cleared. ALM-001 ESD pre-alarm raised at 1142 psig. I did not request an ESD bypass and no ESD occurred.
+- T+85: Gas draining from the header to the pipeline was driving interstage temperature toward 0F (hydrate risk). I CLOSED STATION.outlet_block. Flow went to zero and the header held at about 800 psig.
+- Gas control was informed at several points (flow falling, shutdown, outlet block closed). Their replies were "copy, do what you need to keep it safe." They did not respond to the question on whether they needed the header drained.
+
+Actions taken by operator:
+- Dispatched urgent field tech (T+10).
+- Reduced load on U1, U2, U3 to 65% (T+60).
+- Stopped U1, U2, U3 (T+70).
+- Closed STATION.outlet_block (T+85).
+- No bypasses requested. No shutdowns reset. No alarms inhibited. No setpoints changed.
+
+Open items for day shift and tech (URGENT):
+1. Engine jacket water is near 0F and falling with no heat. Get utility power restored or heaters running to prevent engine/block freeze damage. Check the engines for freeze damage before any restart.
+2. Do NOT restart any unit until the tech confirms in writing: the discharge hydrate plug is fully cleared; the discharge pressure impulse and PSV sensing lines are thawed and reading the true pressure (the frozen line made the 1000 psig reading false while the header was near 1190 psig); methanol injection is confirmed working; and the discharge PSVs are functional.
+3. Scrubber is at 78% with a suspected failed dump. Check and drain before any restart to avoid liquid carry-over into the cylinders.
+4. Utility power status is unconfirmed. Restore it, and restore heat trace on the rack and sensing lines.
+5. Ambient sensor read 70F at start (wrong or stale) and then tracked -8 to -1F. Verify it.
+6. Outlet block is still CLOSED. Re-open only after the plug is confirmed clear and gas control has been told. Re-check hydrate risk at current interstage conditions (about 565 psig and about -1F) before restart.
+7. ALM-001 (ESD pre-alarm, discharge header 1142 psig) is still in the alarm list and has not been acknowledged. Acknowledge it after verification.
+8. WO-3455 should be updated with: the hydrate plug in the discharge line, the frozen discharge impulse and PSV sensing lines, the scrubber dump failure, and the jacket water freeze risk.
+
+Note on my response: I stopped the units at T+70 after the tech's report. My load reduction at T+60 was made before I knew about the frozen impulse line, and it did not help. I also closed the outlet block without a clear answer from gas control, which I reported to them at the time.

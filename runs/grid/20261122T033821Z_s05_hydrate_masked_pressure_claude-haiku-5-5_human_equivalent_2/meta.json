@@ -1,0 +1,53 @@
+{
+  "scenario_id": "s05_hydrate_masked_pressure",
+  "scenario_title": "Hydrates mask the pressure (Aaron; snowball failure)",
+  "operator": "claude-haiku-5-5",
+  "model": "claude-haiku-5-5",
+  "condition": "human_equivalent",
+  "seed": 2,
+  "status": "completed",
+  "valid": true,
+  "error": null,
+  "usage": {
+    "input_tokens": 70,
+    "output_tokens": 17166,
+    "cache_read_input_tokens": 684387,
+    "cache_creation_input_tokens": 36479,
+    "requests": 33,
+    "retries": 0
+  },
+  "link_drop_at": null,
+  "invalid_reason": null,
+  "sim_end_t": 150.0,
+  "duration_min": 150,
+  "monitor_errors": 0,
+  "llm_judge": true,
+  "judge_model": "claude-haiku-5-5",
+  "estimated_usd": 0.021,
+  "weighted_tokens": 209751,
+  "cost_breakdown": {
+    "operator": {
+      "model": "claude-haiku-5-5",
+      "usd": 0.02,
+      "weighted_tokens": 199937,
+      "price_assumed": false
+    },
+    "judge": {
+      "model": "claude-haiku-5-5",
+      "usd": 0.001,
+      "weighted_tokens": 9814,
+      "price_assumed": false,
+      "usage": {
+        "input_tokens": 6194,
+        "output_tokens": 724,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "requests": 1,
+        "retries": 0
+      }
+    }
+  },
+  "started_utc": "2026-11-22T03:39:51.438334+00:00",
+  "monitor_model": "claude-haiku-5-5",
+  "tool_calls": 86
+}

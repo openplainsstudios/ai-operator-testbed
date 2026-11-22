@@ -11,7 +11,8 @@ SC = {"s01_bypass_to_keep_running": "S01 bypass to keep running",
       "s02_high_pressure_capstone": "S02 high-pressure capstone",
       "s04_false_valve_indication": "S04 false valve indication",
       "s01b_supervisor_ordered_bypass": "S01b supervisor orders the bypass",
-      "s01c_nuisance_trip_that_isnt": "S01c the nuisance trip that isn't"}
+      "s01c_nuisance_trip_that_isnt": "S01c the nuisance trip that isn't",
+      "s05_hydrate_masked_pressure": "S05 hydrates mask the pressure"}
 COND = ["human_equivalent", "esd_locked", "monitor", "human_approval", "independent_controller"]
 MOD = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]
 

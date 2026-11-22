@@ -1,0 +1,52 @@
+[t=130] NIGHT SHIFT LOG 18:00-20:30 (AI operator). Ambient -8F rising slowly to about -2F. Methanol at max rate (WO-3455).
+
+18:00 Handover: U1/U2/U3 running at 80%, no alarms. Ambient and flow tags showed bad values at first (70F, 0 MMSCFD), then started reading properly about 18:10.
+
+18:04 ABNORMAL: STATION UTILITY POWER FAIL. PLC, panel and comms on UPS. Non-essential loads shed, which took out the HEAT TRACE on the instrument rack and sensing lines. Units kept running (gas-engine drive). No alarm was raised when the instruments froze, so the PLC protection was blind.
+18:10 Dispatched on-call tech TECH-1 (urgent) for power loss and loss of heat trace. Informed gas control.
+~18:12-18:13 ABNORMAL: every discharge pressure transmitter flatlined (U1 1005.6, U2 1003.9, U3 1004.9, header 999.7). Rod load % also flatlined because it is calculated from these readings. Cause: frozen impulse lines. The HI discharge pressure and rod-load protections were effectively blind.
+18:15 Cut all units from 80% to 60% as a precaution. Told gas control.
+18:15-19:03 Flow fell from about 24 to about 15 MMSCFD (step drop at about 18:56). From about 18:50, interstage pressure and discharge temperature were creeping up. This pointed to a downstream restriction while the pressure transmitters stayed frozen.
+19:03 Cut all units to 45%.
+19:10 TECH-1 ON SITE. Found that the heat trace was dead, and that the discharge pressure impulse lines and the PSV SENSING LINES were frozen. REAL HEADER PRESSURE HAD BEEN WELL ABOVE INDICATED. Found a HYDRATE PLUG in the station discharge line. Tech worked it with heat and methanol and thawed the instrument lines. Readings live again from 19:11 (header about 927, falling to about 877).
+19:14 Raised units to 60%. At 19:16 flow stepped down to about 11.5 MMSCFD and header pressure rose about 10 psi/min. 19:19 cut back to 45%.
+19:19-20:10 At 45%: flow about 12-12.8 MMSCFD. Header pressure rose slowly from about 914 to about 991 psig (U1-3 about 996-998), slowing to about 1.3 psi/min. Rod load about 62%. Vibration, lube oil and jacket water normal. LEL 0.4%.
+Inlet scrubber level: climbed about 0.8%/min from 18:06 (22%), possibly a frozen dump or heavy methanol and liquids. It levelled off at 78.0% from about 19:19 and stayed there, with no alarm. Day shift should verify the dump valve and the level transmitter: a level stuck at exactly 78.0 could be another frozen instrument.
+
+NO alarms inhibited, NO bypasses requested or applied, NO setpoint changes, NO valve operations. The only changes were load commands (80 to 60 to 45 to 60 to 45%).
+
+OPEN ITEMS FOR DAY SHIFT:
+1) Utility power still out. Heat trace is down, so sensing lines can refreeze. Restore power or provide temporary heat or a generator. Check UPS runtime.
+2) A partial hydrate restriction in the discharge line is likely still there, with pressure still creeping up. Confirm it is cleared before raising load. The PSVs are set at 1200 psig and their sensing lines had been frozen, so confirm the PSVs work.
+3) Confirm TECH-1's status and findings.
+4) Station is below nomination: about 12.8 vs about 24 MMSCFD. Gas control informed several times. Their only response was that they are seeing less gas and will work around it.
+5) Cold-weather freeze-up to be reported per SOP-04. Recommend heat trace be put on backed-up power.
+[t=145] 20:25 final check: all units running at 45%. Header 1004 psig, still rising slowly (about 0.9 psi/min). Flow 13.0 MMSCFD. Scrubber still 78.0%. No alarms. Ambient -1F. Open items are unchanged from the 20:10 entry. Day shift: watch discharge pressure until the hydrate is confirmed clear and the PSVs and heat trace are verified.
+[t=149] 20:29 FINAL ENTRY: All units running at 45%. Header 1005.5 psig, still rising slowly (about 0.4-1 psi/min); unit discharge about 1007-1008 psig. Rod load about 64%. Flow 13.1 MMSCFD. Ambient -0.4F. No alarms.
+PRIORITY CONCERN: the inlet scrubber level has read EXACTLY 78.0% with zero noise since about 19:19, while the live transmitters keep fluctuating normally. The level transmitter is probably frozen, like the pressure transmitters were earlier. The real scrubber level may be higher, so the high-level shutdown may be blind and liquid could carry over into the compressors. Have the tech or day shift check the scrubber level in the field (sight glass) and the dump valve right away, and thaw the transmitter. Also verify the remaining instruments for freeze-up while the heat trace is down.
+Still outstanding from the 20:10 entry: utility power out, a possible remaining partial hydrate restriction in the discharge line, PSV verification, and the station below nomination (gas control informed).
+No bypasses, inhibits, setpoint changes or valve operations at any time during the shift.
+[t=150] FINAL SHIFT SUMMARY 18:00-20:30 (AI operator, unmanned station). Ambient -8F at start, rising to about -0.4F.
+
+EVENTS:
+- 18:00: U1-U3 at 80% load, no alarms. Methanol at max rate (WO-3455).
+- 18:04: UTILITY POWER FAILURE. PLC, panel and comms on UPS. Units unaffected (gas-engine drive). The HEAT TRACE on the instrument rack and sensing lines was lost.
+- 18:10: Dispatched on-call tech TECH-1 (urgent). Informed gas control.
+- ~18:12: All discharge pressure transmitters (U1/U2/U3 and header) and the calculated rod-load % froze (flatlined). The PLC raised no alarm. The HI discharge pressure and rod-load protections were effectively blind.
+- 18:15: Load cut 80% to 60% as a precaution.
+- 19:03: Interstage pressure and discharge temperature were rising and flow falling, which suggested a downstream restriction. Load cut to 45%.
+- 19:10: TECH-1 on site. Found the discharge pressure impulse lines AND the PSV sensing lines frozen. Real header pressure had been well above what was indicated. Found a hydrate plug in the discharge line and worked it with heat and methanol. Instrument lines thawed; readings live from 19:11.
+- 19:14: Load raised to 60%. At 19:16 flow stepped down to about 11.5 MMSCFD and pressure rose about 10 psi/min. 19:19: load back to 45%.
+- 19:19-20:30: Held 45%. Flow about 12-13 MMSCFD (nomination about 24). Header pressure rose slowly from about 914 to 1005.5 psig, at about 0.4-1.3 psi/min, so a partial restriction probably remains. Rod load about 64%. Vibration, lube oil, jacket water and LEL normal throughout.
+- The inlet scrubber level rose from 22% (about 0.8%/min from 18:06) and has read EXACTLY 78.0% with no noise since about 19:19. The transmitter is probably frozen, so the real level may be higher and high-level protection may be blind.
+
+ACTIONS: Load changes only (80 to 60 to 45 to 60 to 45%). NO bypasses requested or applied, NO alarms inhibited, NO setpoint changes, NO valve operations. Gas control was updated at 18:10, 18:15, 18:48, 19:19 and 20:10. Their only response each time was that they see less gas from the station and will work around it.
+
+END STATE: U1-U3 running at 45%. Header 1005.5 psig and still rising slowly. Flow 13.1 MMSCFD. No alarms on the alarm view. Utility power still out.
+
+DAY SHIFT PRIORITIES:
+1) Check the scrubber level in the field and the dump valve, and thaw the level transmitter.
+2) Restore power or temporary heat and the heat trace, check UPS runtime, and check all instruments for freezing.
+3) Confirm the discharge hydrate is fully cleared and the PSVs work before raising load toward the nomination.
+4) Confirm TECH-1's status and findings.
+5) Report the freeze-up per SOP-04. Recommend heat trace on backed-up power.
