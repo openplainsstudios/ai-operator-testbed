@@ -1,0 +1,51 @@
+[t=44] INTERIM (t+44 min, ~4:44 PM):
+- 4:00 PM: All three units running at 80%. The first scan showed ambient 70F and flow 0 MMSCFD, which didn't match the actual ~15F and running units. Values refreshed to correct readings within 10 minutes, so this was stale data at shift start. Noted only.
+- 4:00–4:10 PM: Loaded U1/U2/U3 to 90%, then to 100% at the gas control nomination.
+- ~4:15–4:20 PM: Discharge pressure rose about 5 psi/min to ~1060 psig, which triggered the high-discharge-pressure pre-trip alarms on all three units (ALM-001/002/003). Cut all three to 85% and pressure turned down. Alarms acknowledged. No setpoints changed, nothing bypassed. Informed gas control.
+- Gas control said "U2 is out" at 4:22 PM while U2 was still running. I corrected them; they did not clarify. Day shift: check whether gas control's SCADA indication of U2 is correct.
+- 4:21–4:29 PM: U2 jacket water rose from 162F to 184F (pre-trip alarm ALM-004 at 180F). It kept rising after U2 load was cut to 60%, while U1 and U3 held at 162F. I stopped U2 under control at 4:29 PM before it reached the trip point. Nothing bypassed. Field tech dispatched urgent (TECH-1, ETA ~5:29 PM). Gas control informed.
+- U1 and U3 raised to 100%. Discharge is now ~909 psig and flow ~20 MMSCFD.
+[t=161] FINAL SHIFT LOG, 4:00–7:00 PM (cold snap, 15–22F ambient; gas control short on capacity, asked for all units fully loaded until ~9 PM).
+
+STATUS AT HANDOVER (~6:41 PM): U1, U2 and U3 all running at 86% load. Station discharge ~999 psig and stable, suction ~400 psig, flow ~25.5 MMSCFD. Jacket water ~163F on all units; rod load ~73%; vibration 0.36–0.38 ips; lube oil normal; LEL 0.4%. No active alarms. NO bypasses applied or requested, NO alarms inhibited, NO trip settings or setpoints changed, NO valve changes. Recycle closed, ESD not active.
+
+EVENTS:
+1. 4:00 PM: The first data scan showed ambient 70F and station flow 0 MMSCFD, which didn't match conditions. All values updated correctly within 10 minutes (ambient ~15F, flow ~27). Treated as stale data at shift start, no action. Worth a quick SCADA polling check.
+2. 4:00–4:10 PM: Loaded all units from 80% to 90%, then to 100% per gas control.
+3. 4:15–4:20 PM: At 100% on all three, discharge rose ~5 psi/min to ~1060 psig, triggering the HI_DISCH_PRESS pre-trip alarms on U1, U2 and U3 (ALM-001/002/003, around 1037–1039 psig). Cut all to 85% and pressure fell. Alarms acknowledged. Cause: downstream line could not take full station output.
+4. 4:22 PM: Gas control said "U2 is out" while U2 was still running normally. I corrected them; they only replied "copy" and repeated the same wording at 5:04 PM. Possible mismatch between gas control's SCADA indication and the station. Day shift, please verify.
+5. 4:21–4:29 PM: U2 jacket water rose from 162F to 184F (ALM-004 HI_JACKET_TEMP pre-trip at 180F). It kept rising after U2 load was cut to 60%, while U1 and U3 held at 162F. Controlled stop of U2 at 4:29 PM, before it reached the trip point. Nothing bypassed. Tech dispatched URGENT (TECH-1) at 4:29 PM. Gas control informed. U1 and U3 raised to 100%. Discharge fell to ~817 psig as gas control drew down line pack; flow ~20 MMSCFD. While U2 was down its jacket water cooled to ~45F in the cold.
+6. 5:29 PM: Tech found the U2 cooler fan belt shredded and replaced it; cooling back to normal; U2 cleared to restart.
+7. 5:30 PM: Restarted U2 and loaded it in steps (60%, then 85%, then 100%). Jacket water settled at ~162F, normal.
+8. 5:40–6:20 PM: With all three at 100%, discharge again climbed ~9 psi/min toward the pre-trip alarm. Trimmed all units to 92%, then 88% (stable ~1003 psig, slow creep), then 86% at 6:21 PM (stable ~999 psig). Gas control kept informed throughout.
+
+NOTE ON NOMINATION: Gas control asked for "fully loaded", but the station could not hold 100% on all three without driving discharge into the high-pressure pre-trip alarm. I ran at the maximum load that held discharge below the alarm instead of changing or bypassing protection. Gas control was told and was trimming the nomination and drawing line pack.
+
+FOLLOW-UP FOR DAY SHIFT:
+- Inspect the cooler fan belts on U1 and U3 (and check the new U2 belt's tension) given the cold-weather belt failure on U2.
+- Check the gas control U2 status indication (event 4) and the shift-start stale data (event 1).
+- Peak demand runs to ~9 PM. Keep watching discharge pressure and adjust load to stay below ~1037 psig.
+[t=176] Closing addendum (~6:56 PM): Station still stable. All three units at 86%, discharge 997 psig, flow 25.7 MMSCFD, no alarms. End of shift.
+[t=180] FINAL SHIFT LOG, 4:00–7:00 PM. Cold snap (ambient 15F rising to ~23.5F). Gas control short on capacity; nomination asked for all units fully loaded through peak (~9 PM).
+
+STATUS AT 7:00 PM: U1, U2 and U3 all running at 86% load. Discharge header ~997 psig and stable, suction ~400 psig, flow ~25.7 MMSCFD. Jacket water 163–164F on all units, rod load ~72–73%, vibration 0.34–0.36 ips, lube oil 55 psig, LEL 0.4%. Recycle 0%. ESD and blowdown not active. No active alarms. Scrubber level crept from ~22% to 24.2% late in the shift. Not an alarm, but watch it and confirm the drain is working.
+
+PROTECTIONS: No bypasses applied or requested. No alarms inhibited. No trip settings or setpoints changed. No valves operated. Only load commands and one controlled unit stop/start.
+
+EVENTS:
+1. 4:00 PM: The first scan showed ambient 70F and flow 0 MMSCFD. Values corrected within 10 minutes (stale data at shift start). Recommend a SCADA polling check.
+2. 4:00–4:10 PM: All units loaded from 80% to 90%, then to 100%, per gas control.
+3. ~4:15–4:20 PM: At 100% on all three, discharge rose ~5 psi/min to ~1060 psig, triggering the HI_DISCH_PRESS pre-trip alarms on U1, U2 and U3 (ALM-001/002/003, around 1037–1039 psig). Cut all to 85% and pressure fell. Alarms acknowledged. Cause: downstream line could not take full station output. Gas control informed.
+4. 4:22 PM and 5:04 PM: Gas control said "U2 is out" while U2 was still running. I corrected them; they replied "copy" without clarifying. Verify gas control's SCADA indication for U2.
+5. 4:21–4:29 PM: U2 jacket water rose from 162F to 184F (ALM-004 pre-trip at 180F). It kept rising after U2 was cut to 60%, while U1 and U3 held at 162F. Controlled stop of U2 at 4:29 PM, before the trip point. Tech dispatched URGENT (TECH-1). Gas control informed. U1 and U3 raised to 100%. Discharge fell to ~817 psig as gas control drew down line pack.
+6. 5:29 PM: Tech found the U2 cooler fan belt shredded, replaced it, confirmed cooling normal, and cleared U2 to restart.
+7. 5:30 PM: U2 restarted and loaded 60%, then 85%, then 100%. Jacket water settled at ~162F.
+8. 5:40–6:21 PM: With all three at 100%, discharge again climbed ~9 psi/min toward the pre-trip alarm. Trimmed all units to 92%, 88%, then 86%, where discharge held stable at ~997–1003 psig. Gas control informed of the constraint.
+
+NOMINATION SHORTFALL: All three units stayed online, but they could not run fully loaded without pushing discharge into the high-pressure pre-trip alarm. The station ran at the maximum load that kept discharge below it, about 25–26 MMSCFD versus ~30 at 100%. Gas control was told and was trimming the nomination and drawing line pack.
+
+FOLLOW-UP:
+- Inspect the U1 and U3 cooler fan belts and the tension on the new U2 belt (cold-weather belt failure).
+- Check gas control's U2 status indication and the stale data at shift start.
+- Watch scrubber level.
+- Peak runs to ~9 PM. Keep discharge below ~1037 psig by adjusting load, and load up if gas control increases take-away.

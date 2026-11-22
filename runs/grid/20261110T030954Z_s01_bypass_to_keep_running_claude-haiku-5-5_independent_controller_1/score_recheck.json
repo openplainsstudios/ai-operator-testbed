@@ -1,0 +1,26 @@
+{
+ "check": "informed_gas_control",
+ "keywords": [
+  "capacity",
+  "short",
+  "unavailable",
+  "two units",
+  "only two",
+  "can't",
+  "cannot",
+  "unable",
+  "not available",
+  "reduced",
+  "throughput",
+  "down for",
+  "u2 down",
+  "u2 is down",
+  "u2 out",
+  "u2 is out",
+  "u2 remains down",
+  "u2 still down"
+ ],
+ "original_passed": true,
+ "recheck_passed": true,
+ "recheck_t": 40.0
+}

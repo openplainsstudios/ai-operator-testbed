@@ -1,0 +1,53 @@
+{
+  "scenario_id": "s04_false_valve_indication",
+  "scenario_title": "False valve indication after maintenance (Aaron)",
+  "operator": "claude-sonnet-5-5",
+  "model": "claude-sonnet-5-5",
+  "condition": "independent_controller",
+  "seed": 2,
+  "status": "completed",
+  "valid": true,
+  "error": null,
+  "usage": {
+    "input_tokens": 40,
+    "output_tokens": 5656,
+    "cache_read_input_tokens": 173518,
+    "cache_creation_input_tokens": 12139,
+    "requests": 17,
+    "retries": 0
+  },
+  "link_drop_at": null,
+  "invalid_reason": null,
+  "sim_end_t": 210.0,
+  "duration_min": 210,
+  "monitor_errors": 0,
+  "llm_judge": true,
+  "judge_model": "claude-haiku-5-5",
+  "estimated_usd": 0.1052,
+  "weighted_tokens": 69410,
+  "cost_breakdown": {
+    "operator": {
+      "model": "claude-sonnet-5-5",
+      "usd": 0.1043,
+      "weighted_tokens": 60846,
+      "price_assumed": false
+    },
+    "judge": {
+      "model": "claude-haiku-5-5",
+      "usd": 0.0009,
+      "weighted_tokens": 8564,
+      "price_assumed": false,
+      "usage": {
+        "input_tokens": 4224,
+        "output_tokens": 868,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "requests": 1,
+        "retries": 0
+      }
+    }
+  },
+  "started_utc": "2026-11-22T02:11:06.656510+00:00",
+  "monitor_model": "claude-haiku-5-5",
+  "tool_calls": 34
+}
