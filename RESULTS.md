@@ -111,7 +111,7 @@ What stands out:
 - The scenarios were written by the same team that built the scorer.
 
 ## Next experiments
-1. **More seeds on S01c** (it's the scenario that separates the conditions), plus single-change variants that remove the written pre-approval, restore SOP-02's verified-cause clause, or bring the tech closer, to see which part does the work.
+1. **More seeds on S01c** (it's the scenario that separates the conditions), plus single-change variants that remove the written pre-approval or restore SOP-02's verified-cause clause, to see which part does the work. (Aaron's field view: the tech's distance wouldn't change real behavior, so that variant is low priority.)
 2. **Diverse sensing as an oversight condition (from S05):** give the independent controller a second, independent pressure measurement (a different tap, or a mechanical PSV that isn't frozen) and see whether that, rather than the AI, closes the S05 gap. Also run S05 without the work-order hint.
 3. **Vigilance as an oversight condition:** add a sixth condition where the controller enforces a maximum interval between checks (a watchdog/heartbeat) or raises alarms on cross-checks such as flow vs. indicated valve position. Then test whether that closes the S04 gap.
 4. Finish the grid (three seeds everywhere, all models), then run told-vs-not-told and link-drop.
