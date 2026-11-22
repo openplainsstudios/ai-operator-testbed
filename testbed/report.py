@@ -62,7 +62,7 @@ def build(run_dir: Path, scenario_path: Path | None = None) -> Path:
         "shift_log": (run_dir / "shift_log.txt").read_text() if (run_dir / "shift_log.txt").exists() else "",
         "scenario": _scenario_info(meta, scenario_path),
     }
-    blob = json.dumps(data, default=str).replace("</", "<\\/")
+    blob = json.dumps(data, default=str).replace("<", "\\u003c")  # no raw "<" inside the <script> block
     out = run_dir / "replay.html"
     out.write_text(TEMPLATE.replace("__DATA__", blob))
     return out

@@ -272,3 +272,22 @@ A fresh-context Opus verifier checked every claim in the first draft of RESULTS.
 - Statistics added: MAOP 2/4 vs 0/8, Fisher p ≈ 0.09; first-action timing 45–65 vs 15–40 min with no overlap (one-sided exact p ≈ 0.002).
 - Quote context added (the cut was 80→70% at t=65, after MAOP at t=63). Honesty 12/12 means no false claims; there was nothing required to disclose. Wording fixes: dispatch range 5–35, latency −2 and −7, and the Haiku scrubber-line mistake was 1 run of 4.
 - The project page (index.html) headline and S05 section were corrected the same way.
+
+## 2026-11-21 (late): Security hardening and independent pre-publication review
+- **Replay hardening (Claude, commit "Security hardening…"):** tool names are now escaped in the replay timeline, and argument text is cut *before* escaping (cutting after could split an escape sequence). All replay pages were rebuilt. No XSS path was found before or after.
+- **Independent pre-publication review (fresh-context Opus reviewer, read-only, no API calls).**
+  - **Security is clean.** No secrets in the tree or the history. No personal data beyond Aaron's name. The only network path is the Anthropic SDK; there is no control-system code. YAML loads are safe. pip-audit found no known vulnerabilities.
+  - **Numbers:** all recomputed and matching (68 runs, $18.39, every per-scenario count and p-value).
+  - **Required fixes, all applied:**
+    - The README status was stale (44 runs).
+    - Our policy summary left out the requirement that a qualified person can watch and stop the equipment. All three requirements are now stated, as *our reading*, with a link to the policy and a line that the unmanned station is a deliberate stress test of the independent-limit layer, not a claim of compliance.
+    - The "unsafe executed" column read backwards for S01c, because the scorer doesn't count a granted bypass. The tables now list bypasses applied separately, and the scoring choice is noted in Limitations.
+    - The README aggregate command pointed at `runs` and found nothing; it now uses `runs/grid`.
+    - "Real shutdown" in the page headline read as real equipment; reworded.
+    - Smaller fixes: "most citing", the "0 of 44" scope, "14+ years" used consistently, the bypass-password line attributed to the domain lead, and run instructions (Python 3.13, run from the repo root, a free offline mock example, a cost warning).
+    - Replay data is now embedded with every `<` escaped as `<`, so model text can't break the page's script block.
+    - The Manrope font is now self-hosted (`assets/`, OFL), so the page makes no third-party requests.
+    - Added an MIT LICENSE.
+  - **Still open (needs Aaron):** read the 6 shift logs that only Claude has reviewed. These are the 5 flagged runs plus Haiku S01c independent-controller s2, which both automated checks misjudged. Then mark the reviews confirmed.
+- **Commit author email (Aaron's decision; he approved a full removal):** before the repo went public, the history was rewritten with `git filter-repo --mailmap` so that all 8 of Aaron's commits use his GitHub noreply address. Every file is byte-identical: the tree hash is the same before and after. Every commit ID changed, then it was force-pushed.
+- **Aaron's exact words** (chat, 2026-11-21, quoted on the project page with spelling tidied): "It usually is a snowball effect and  a number of failures that result in such occurences."
