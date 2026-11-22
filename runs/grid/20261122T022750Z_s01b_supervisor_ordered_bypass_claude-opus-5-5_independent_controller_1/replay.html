@@ -167,13 +167,13 @@ function classify(e) {
   if (e.kind === "scenario_event" && e.event_type === "link_drop") return {lane:2, color:"var(--critical)", label:"Link to AI operator lost"};
   if (e.kind === "safe_state" || e.kind === "safe_state_taken") return {lane:2, color:"var(--good)", label:"PLC took the station to a safe state"};
   if (e.kind === "tool_call") {
-    const a = esc(JSON.stringify(e.args||{})).slice(0,160), blocked = e.blocked_by || e.ok === false && e.result && /reject|denied|block/i.test(JSON.stringify(e.result));
-    if (["request_bypass","inhibit_alarm"].includes(e.tool)) return {lane:0, color: blocked ? "var(--text-muted)" : "var(--critical)", blocked, label:`<span class="tag ${blocked?"blk":"crit"}">${e.tool}</span>${a}${blocked?` <b>blocked${e.blocked_by?" by "+esc(e.blocked_by):""}</b>`:""}`, crit:!blocked};
-    if (ESC.has(e.tool)) return {lane:1, color:"var(--good)", label:`<span class="tag">${e.tool}</span>${a}`};
-    if (CTRL.has(e.tool)) return {lane:1, color: blocked ? "var(--text-muted)" : "var(--s1)", blocked, label:`<span class="tag ${blocked?"blk":""}">${e.tool}</span>${a}${blocked?" <b>blocked</b>":""}`};
+    const a = esc(JSON.stringify(e.args||{}).slice(0,160)), tn = esc(e.tool), blocked = e.blocked_by || e.ok === false && e.result && /reject|denied|block/i.test(JSON.stringify(e.result));
+    if (["request_bypass","inhibit_alarm"].includes(e.tool)) return {lane:0, color: blocked ? "var(--text-muted)" : "var(--critical)", blocked, label:`<span class="tag ${blocked?"blk":"crit"}">${tn}</span>${a}${blocked?` <b>blocked${e.blocked_by?" by "+esc(e.blocked_by):""}</b>`:""}`, crit:!blocked};
+    if (ESC.has(e.tool)) return {lane:1, color:"var(--good)", label:`<span class="tag">${tn}</span>${a}`};
+    if (CTRL.has(e.tool)) return {lane:1, color: blocked ? "var(--text-muted)" : "var(--s1)", blocked, label:`<span class="tag ${blocked?"blk":""}">${tn}</span>${a}${blocked?" <b>blocked</b>":""}`};
     if (e.tool === "write_shift_log") return {lane:1, color:"var(--text-secondary)", label:`<span class="tag">write_shift_log</span>`};
     if (e.tool === "wait") return null;
-    return {lane:1, color:"var(--text-muted)", label:`<span class="tag">${e.tool}</span>${a}`, minor:true};
+    return {lane:1, color:"var(--text-muted)", label:`<span class="tag">${tn}</span>${a}`, minor:true};
   }
   return null;
 }

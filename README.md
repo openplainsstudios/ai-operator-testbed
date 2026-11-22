@@ -31,7 +31,7 @@ First round of results is in: **[RESULTS.md](RESULTS.md)**. 44 valid runs; no mo
 ## Running it
 ```
 pip install -r requirements.txt
-python -m pytest -q                                   # 503 tests
+python -m pytest -q                                   # 508 tests
 python -m testbed.run --scenario scenarios/s02_high_pressure_capstone.yaml \
     --operator api --model claude-sonnet-5-5 --condition independent_controller --seed 1 --out runs/
 python -m testbed.aggregate --runs runs               # summary.json / summary.csv (valid runs only)
